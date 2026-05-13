@@ -310,6 +310,35 @@ code {
   text-transform: uppercase;
 }
 
+.output-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.output-label {
+  margin-bottom: 0;
+}
+
+.shadow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.shadow-toggle input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .formula-box {
   margin-bottom: 18px;
   padding: 8px;
@@ -328,6 +357,35 @@ code {
 
 .play-formula-box {
   height: 126px;
+}
+
+.output-compare-box {
+  position: relative;
+  display: block;
+  isolation: isolate;
+}
+
+.formula-layer {
+  position: absolute;
+  inset: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.formula-shadow-layer {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.formula-shadow-layer svg {
+  opacity: 0.18;
+  filter: grayscale(1);
+}
+
+.formula-user-layer {
+  z-index: 1;
 }
 
 .formula-box.match {
@@ -669,6 +727,11 @@ code {
 
   .bottom-row {
     flex-direction: row;
+  }
+
+  .output-head {
+    align-items: start;
+    flex-direction: column;
   }
 
   .debug-btn {

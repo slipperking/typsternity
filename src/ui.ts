@@ -81,9 +81,18 @@ export function createAppMarkup(): string {
             <span class="ph">loading…</span>
           </div>
 
-          <div class="sec-label">Your output</div>
-          <div class="formula-box play-formula-box" id="yours-box">
-            <span class="ph">start typing below…</span>
+          <div class="output-head">
+            <div class="sec-label output-label">Your output</div>
+            <label class="shadow-toggle" for="shadow-toggle">
+              <input id="shadow-toggle" type="checkbox" />
+              <span>show shadow</span>
+            </label>
+          </div>
+          <div class="formula-box play-formula-box output-compare-box" id="yours-box">
+            <div class="formula-layer formula-shadow-layer" id="yours-shadow" aria-hidden="true"></div>
+            <div class="formula-layer formula-user-layer" id="yours-render">
+              <span class="ph">start typing below…</span>
+            </div>
           </div>
 
           <textarea

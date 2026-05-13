@@ -1,7 +1,9 @@
 import './style.css'
 import { TypsterityGame } from './game'
 import { createAppMarkup } from './ui'
+import { inject } from "@vercel/analytics"
 
+inject()
 const app = document.querySelector<HTMLDivElement>('#app')
 
 if (!app) {

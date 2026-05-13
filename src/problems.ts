@@ -24,6 +24,7 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'exists') * 2 +
     countOccurrences(source, 'hat(') +
     countOccurrences(source, 'oo') +
+    countOccurrences(source, '^(') +
     countOccurrences(source, 'planck') +
     countOccurrences(source, '(') * 2
 
@@ -103,20 +104,21 @@ export const PROBLEMS: Problem[] = [
   problem('Scalar Triple Product', 'bold(a) dot (bold(b) times bold(c)) = det mat(a_1, a_2, a_3; b_1, b_2, b_3; c_1, c_2, c_3)', 40),
   problem('Lagrange Identity', 'norm(bold(a) times bold(b))^2 = norm(bold(a))^2 norm(bold(b))^2 - (bold(a) dot bold(b))^2', 38),
   problem('Curl of a Curl', 'nabla times (nabla times bold(F)) = nabla (nabla dot bold(F)) - nabla^2 bold(F)', 40),
-  problem("Green's Theorem", 'integral.cont_C P dif x + Q dif y = integral.double_D (partial Q)/(partial x) - (partial P)/(partial y) dif A', 40),
-  problem("Green's First Identity", 'integral.double_D (u nabla^2 v + nabla u dot nabla v) dif A = integral.cont_C u (partial v)/(partial n) dif s', 42),
-  problem("Green's Second Identity", 'integral.double_D (u nabla^2 v - v nabla^2 u) dif A = integral.cont_C (u (partial v)/(partial n) - v (partial u)/(partial n)) dif s', 42),
-  problem('Divergence Theorem', 'integral.triple_V nabla dot bold(F) dif V = integral.double_S bold(F) dot hat(bold(n)) dif S', 42),
+  problem("Green's Theorem", 'integral.cont_(partial Omega) P dif x + Q dif y = integral.double_Omega ((partial Q)/(partial x) - (partial P)/(partial y)) dif x dif y', 40),
+  problem("Green's First Identity", 'integral.double_Omega (u nabla^2 v + nabla u dot nabla v) dif A = integral.cont_(partial Omega) u (partial v)/(partial bold(hat(n))) dif s', 42),
+  problem("Green's Second Identity", 'integral.double_Omega (u nabla^2 v - v nabla^2 u) dif A = integral.cont_(partial Omega) (u (partial v)/(partial hat(bold(n))) - v (partial u)/(partial hat(bold(n)))) dif s', 42),
+  problem('Divergence Theorem', 'integral.triple_V nabla dot bold(F) dif x dif y dif z = integral.surf_S bold(F) dot hat(bold(n)) dif S', 42),
   problem("Stokes' Theorem", 'integral.cont_C bold(F) dot dif bold(r) = integral.double_S (nabla times bold(F)) dot hat(bold(n)) dif S', 42),
   problem('Parseval Identity', 'integral_(-oo)^oo abs(f(x))^2 dif x = integral_(-oo)^oo abs(hat(f)(xi))^2 dif xi', 42),
-  problem('Wirtinger Chain Rule', '(partial F)/(partial overline(z)) = (partial F)/(partial w) (partial w)/(partial overline(z)) + (partial F)/(partial overline(w)) (partial overline(w))/(partial overline(z))', 34),
+  problem('Wirtinger Antiholomorphic Chain Rule', '(partial F)/(partial overline(z)) = (partial F)/(partial w) (partial w)/(partial overline(z)) + (partial F)/(partial overline(w)) (partial overline(w))/(partial overline(z))', 34),
   problem('Christoffel Transformation Law', "Gamma^(i')_(j' k') = (partial x^(i'))/(partial x^r) (partial x^p)/(partial x^(j')) (partial x^q)/(partial x^(k')) Gamma^r_(p q) + (partial x^(i'))/(partial x^r) (partial^2 x^r)/(partial x^(j') partial x^(k'))", 40),
   problem('Global Residue Theorem', 'sum_(k=1)^n op("Res", limits: #true)_(z = z_k) f(z) + op("Res", limits: #true)_(z = oo) f(z) = 0', 34),
   problem('Second Fundamental Theorem of Nevanlinna Theory', "m(r,f) + sum_(nu=1)^q m(r,a_nu,f) <= 2 T(r,f) - N(r,0,f') - 2 N(r,f) + N(r,f') + S(r,f)", 42),
   problem('Nevanlinna Error Term', "S(r,f) = m(r,(f')/f) + m(r,sum_(nu=1)^q (f')/(f - a_nu)) + q log((3 q)/delta) + log 2 - log abs(c')", 42),
   problem('Nevanlinna Deficiency Relation', 'sum_(a in S) [delta(a) + theta(a)] <= sum_(a in S) Theta(a) <= 2', 38),
   problem('Analytic Capacity', `gamma(K) = sup { abs(f'(oo)) : f "is holomorphic on" hat(CC) without K and f(hat(CC) without K) subset.eq overline(DD) and f(oo) = 0 }`, 42),
-  problem('Cauchy–Pompeiu Formula', 'f(z) = 1/(2 pi i) (integral.cont_(partial Omega) (f(zeta))/(zeta - z) dif zeta - integral.double_Omega (partial f)/(partial overline(zeta)) (dif overline(zeta) and dif zeta)/(zeta - z))', 42),
+  problem('Cauchy–Pompeiu Formula', 'f(z) = 1/(2 pi i) (integral.cont.ccw_(partial Omega) (f(zeta))/(zeta - z) dif zeta - integral.double_Omega (partial f)/(partial overline(zeta)) (dif overline(zeta) and dif zeta)/(zeta - z))', 42),
+  problem('Schwarz Integral Formula', 'f(z) = 1 / (2 pi i) integral.cont.ccw_(abs(zeta) = r) (Re(f(zeta))) / zeta (zeta+z)/(zeta-z)dif zeta + i Im(f(0))', 42),
   problem('De Morgan Law', 'not (P and Q) <==> (not P) or (not Q)', 22),
   problem('Quantifier Negation', 'not (forall x in X : P(x)) <==> exists x in X : not P(x)', 26),
   problem('Sequent with Entailment', 'Gamma tack.r.double Delta ==> Gamma tack.r.double Delta union {phi}', 24),
@@ -124,9 +126,10 @@ export const PROBLEMS: Problem[] = [
   problem('Kronecker Delta Cases', 'delta_(i j) = cases(1 & "if" i = j, 0 & "if" i != j)', 24),
   problem('Modal Distribution', 'square (P -> Q) -> (square P -> square Q)', 24),
   problem('Jensen Formula', 'log abs(f(0)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) dif theta - sum_(abs(a_n) < r) log(r/(abs(a_n)))', 38),
-  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 42),
+  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 44),
   problem('Meromorphic Automorphisms of the Riemann Sphere', 'op("PSL")(2, CC) tilde.equiv op("SL")(2, CC) \\/ { plus.minus bold(I) } tilde.equiv op("Aut")(hat(CC))', 34),
   problem('Weierstrass Factorization Theorem', 'f(z) = z^m e^(phi(z)) product_(n=1)^oo E_(p_n)((z)/(a_n))', 38),
+  problem("Binet's Theorem", 'F_n = 1 / sqrt(5) ((1 + sqrt(5)) / 2)^n - 1 / sqrt(5) ((1 - sqrt(5)) / 2)^n', 38),
   problem('Reynolds Transport Theorem', '(dif)/(dif t) integral_(Omega(t)) f(x, t) dif V = integral_(Omega(t)) (partial f)/(partial t) dif V + integral_(partial Omega(t)) (bold(v) dot hat(bold(n))) f dif A', 40),
   problem("Cartan's Magic Formula", 'cal(L)_X omega = dif iota_X omega + iota_X dif omega', 28),
   problem('Spherical Derivative', "f^sharp (z) = (2 abs(f'(z)))/(1 + abs(f(z))^2)", 24),

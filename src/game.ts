@@ -24,6 +24,9 @@ interface GameElements {
   problemName: HTMLDivElement
   targetBox: HTMLDivElement
   yoursBox: HTMLDivElement
+  shadowToggle: HTMLInputElement
+  yoursShadow: HTMLDivElement
+  yoursRender: HTMLDivElement
   codeInput: HTMLTextAreaElement
   matchStatus: HTMLDivElement
   finalScore: HTMLDivElement
@@ -49,7 +52,7 @@ function getRequiredElement<TElement extends HTMLElement>(
 function shuffle<TValue>(values: TValue[]): TValue[] {
   for (let index = values.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1))
-    ;[values[index], values[randomIndex]] = [values[randomIndex], values[index]]
+      ;[values[index], values[randomIndex]] = [values[randomIndex], values[index]]
   }
 
   return values
@@ -101,6 +104,8 @@ export class TypsterityGame {
   private current: Problem | null = null
   private history: HistoryEntry[] = []
   private targetResult: RenderResult | null = null
+  private userResult: RenderResult | null = null
+  private shadowEnabled = false
 
   constructor(root: HTMLElement) {
     this.elements = {
@@ -124,6 +129,9 @@ export class TypsterityGame {
       problemName: getRequiredElement<HTMLDivElement>(root, '#problem-name'),
       targetBox: getRequiredElement<HTMLDivElement>(root, '#target-box'),
       yoursBox: getRequiredElement<HTMLDivElement>(root, '#yours-box'),
+      shadowToggle: getRequiredElement<HTMLInputElement>(root, '#shadow-toggle'),
+      yoursShadow: getRequiredElement<HTMLDivElement>(root, '#yours-shadow'),
+      yoursRender: getRequiredElement<HTMLDivElement>(root, '#yours-render'),
       codeInput: getRequiredElement<HTMLTextAreaElement>(root, '#code-input'),
       matchStatus: getRequiredElement<HTMLDivElement>(root, '#match-status'),
       finalScore: getRequiredElement<HTMLDivElement>(root, '#final-num'),
@@ -172,6 +180,11 @@ export class TypsterityGame {
 
     this.elements.endButton.addEventListener('click', () => {
       this.endGame()
+    })
+
+    this.elements.shadowToggle.addEventListener('change', () => {
+      this.shadowEnabled = this.elements.shadowToggle.checked
+      this.syncShadowState()
     })
 
     if (DEBUG_MENU_ENABLED && this.elements.debugLoadButton) {
@@ -304,6 +317,7 @@ export class TypsterityGame {
     this.queue = this.buildQueue(initialProblemIndex)
     this.current = null
     this.targetResult = null
+    this.userResult = null
   }
 
   private async startGame(initialProblemIndex?: number): Promise<void> {
@@ -384,9 +398,14 @@ export class TypsterityGame {
     this.elements.pointsBadge.className = `points-pill ${getPointsTierClass(next.pts)}`
 
     this.setSvg(this.elements.targetBox, null, 'rendering…')
+    this.targetResult = null
+    this.userResult = null
+    this.elements.yoursBox.classList.remove('match')
+    this.renderShadowLayer()
     this.targetResult = await renderFormula(next.src)
     this.setSvg(this.elements.targetBox, this.targetResult, 'render error')
-    this.setSvg(this.elements.yoursBox, null, 'start typing below…')
+    this.renderShadowLayer()
+    this.renderUserLayer(null)
 
     this.elements.codeInput.focus()
   }
@@ -467,17 +486,83 @@ export class TypsterityGame {
     }
   }
 
+  private setLayerSvg(
+    layerElement: HTMLDivElement,
+    result: RenderResult | null,
+    emptyLabel = '',
+  ): void {
+    layerElement.innerHTML = ''
+
+    if (!result || !result.svg) {
+      const className = result && !result.ok ? 'err' : 'ph'
+      const message = result && !result.ok ? 'parse error' : emptyLabel
+
+      if (!message) {
+        return
+      }
+
+      layerElement.innerHTML = `<span class="${className}">${message}</span>`
+      return
+    }
+
+    layerElement.innerHTML = result.svg
+
+    const svg = layerElement.querySelector('svg')
+
+    if (svg) {
+      svg.style.display = 'block'
+      svg.style.maxWidth = '100%'
+      svg.style.maxHeight = '100%'
+      svg.style.width = 'auto'
+      svg.style.height = 'auto'
+      svg.removeAttribute('width')
+      svg.removeAttribute('height')
+    }
+  }
+
+  private renderUserLayer(result: RenderResult | null): void {
+    const emptyLabel =
+      this.shadowEnabled && this.targetResult?.ok ? '' : 'start typing below…'
+    this.setLayerSvg(this.elements.yoursRender, result, emptyLabel)
+  }
+
+  private renderShadowLayer(): void {
+    const shadowResult =
+      this.shadowEnabled &&
+      this.targetResult?.ok &&
+      (!this.userResult || this.userResult.ok)
+        ? this.targetResult
+        : null
+    this.setLayerSvg(this.elements.yoursShadow, shadowResult)
+  }
+
+  private syncShadowState(): void {
+    this.elements.yoursBox.classList.toggle('shadow-enabled', this.shadowEnabled)
+    this.renderShadowLayer()
+    this.renderUserLayer(this.userResult)
+  }
+
   private async handleInput(): Promise<void> {
     const value = this.elements.codeInput.value.trim()
     this.elements.matchStatus.textContent = ''
+    this.elements.yoursBox.classList.remove('match')
+
+    if (this.advanceTimeoutId !== null) {
+      window.clearTimeout(this.advanceTimeoutId)
+      this.advanceTimeoutId = null
+    }
 
     if (!value) {
-      this.setSvg(this.elements.yoursBox, null, 'start typing below…')
+      this.userResult = null
+      this.renderShadowLayer()
+      this.renderUserLayer(null)
       return
     }
 
     const userResult = await renderFormula(value)
-    this.setSvg(this.elements.yoursBox, userResult, 'start typing below…')
+    this.userResult = userResult
+    this.renderShadowLayer()
+    this.renderUserLayer(userResult)
 
     if (userResult.ok && this.targetResult?.ok) {
       const matches = normalizeSvg(userResult.svg) === normalizeSvg(this.targetResult.svg)

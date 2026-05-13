@@ -1,1 +1,1 @@
-export const DEBUG_MENU_ENABLED = false
+export const DEBUG_MENU_ENABLED = import.meta.env.DEV
