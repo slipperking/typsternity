@@ -19,14 +19,14 @@ export function createAppMarkup(): string {
     <div class="app-shell">
       <div id="loading" class="loading-screen">
         <div class="loading-card">
-          <div class="loading-title">Typst<sub class="logo-subtle">erile</sub></div>
+          <div class="loading-title">Typst<sub class="logo-subtle">erity</sub></div>
           <div class="loading-status" id="load-msg">Loading Typst compiler…</div>
         </div>
       </div>
 
       <main class="wrap">
         <section id="screen-start" class="screen start-screen">
-          <div class="logo">Typst<sub class="logo-subtle">erile</sub></div>
+          <div class="logo">Typst<sub class="logo-subtle">erity</sub></div>
           <div class="tagline">A Typst Typesetting Game</div>
           <p class="desc">
             A rendered formula appears. Write the Typst math source that produces it.
