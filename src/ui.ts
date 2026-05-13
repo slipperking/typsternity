@@ -56,6 +56,9 @@ export function createAppMarkup(): string {
                 to identify unknown symbols.
               </li>
             </ul>
+            <div class="site-credit" id="site-credit">
+              <small>Inspired by <a href="https://texnique.xyz/" target="_blank" rel="noreferrer noopener">Texnique</a></small>
+            </div>
           </div>
         </section>
 
