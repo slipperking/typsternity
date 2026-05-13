@@ -437,8 +437,8 @@ code {
 
 .debug-problem-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
   max-height: 28rem;
   overflow-y: auto;
   padding-top: 6px;
@@ -449,7 +449,7 @@ code {
 .debug-problem {
   display: grid;
   gap: 8px;
-  padding: 10px 10px 12px;
+  padding: 9px 9px 10px;
   border: 1px solid #eadfd5;
   background: rgba(255, 253, 250, 0.92);
 }
@@ -463,13 +463,13 @@ code {
 }
 
 .debug-problem-name {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   line-height: 1.2;
 }
 
 .debug-problem-points {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .debug-load-link {
@@ -478,16 +478,16 @@ code {
 }
 
 .debug-preview-box {
-  min-height: 58px;
+  min-height: 52px;
   margin-bottom: 0;
-  padding: 6px;
+  padding: 5px;
 }
 
 .debug-src {
   display: block;
   color: var(--muted);
-  font-size: 0.66rem;
-  line-height: 1.4;
+  font-size: 0.62rem;
+  line-height: 1.35;
   word-break: break-word;
 }
 

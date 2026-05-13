@@ -5,7 +5,7 @@ function countOccurrences(source: string, token: string): number {
 }
 
 function scoreProblem(source: string, basePoints: number): number {
-  const lengthBonus = Math.floor(source.length / 24)
+  const lengthBonus = Math.floor(source.length / 12)
   const bracketBonus = Math.floor((source.match(/[()[\]{}]/g) ?? []).length / 14)
   const typingBonus =
     countOccurrences(source, 'bold(') * 2 +
@@ -23,13 +23,34 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'forall') * 2 +
     countOccurrences(source, 'exists') * 2 +
     countOccurrences(source, 'hat(') +
-    countOccurrences(source, 'oo')
+    countOccurrences(source, 'oo') +
+    countOccurrences(source, 'planck')
 
   return basePoints + lengthBonus + bracketBonus + typingBonus
 }
 
+function normalizeBasePoints(basePoints: number): number {
+  if (basePoints <= 18) {
+    return 8
+  }
+
+  if (basePoints <= 24) {
+    return 10
+  }
+
+  if (basePoints <= 30) {
+    return 12
+  }
+
+  if (basePoints <= 36) {
+    return 14
+  }
+
+  return 16
+}
+
 function problem(name: string, src: string, pts: number): Problem {
-  return { name, src, pts: scoreProblem(src, pts) }
+  return { name, src, pts: scoreProblem(src, normalizeBasePoints(pts)) }
 }
 
 export const PROBLEMS: Problem[] = [
@@ -101,5 +122,18 @@ export const PROBLEMS: Problem[] = [
   problem('Set-Theoretic Inclusion', 'A subset.eq B and B subset.eq C => A subset.eq C', 22),
   problem('Kronecker Delta Cases', 'delta_(i j) = cases(1 & "if" i = j, 0 & "if" i != j)', 24),
   problem('Modal Distribution', 'square (P -> Q) -> (square P -> square Q)', 24),
+  problem('Jensen Formula', 'log abs(f(0)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) dif theta - sum_(abs(a_n) < r) log(r/(abs(a_n)))', 38),
+  problem('Poisson–Jensen Formula', 'log abs(f(z)) = (1/(2 pi)) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 42),
+  problem('Meromorphic Automorphisms of the Riemann Sphere', 'op("PSL")(2, CC) tilde.equiv op("SL")(2, CC) \\/ { plus.minus bold(I) } tilde.equiv op("Aut")(hat(CC))', 34),
+  problem('Weierstrass Factorization Theorem', 'f(z) = z^m e^(phi(z)) product_(n=1)^oo E_(p_n)((z)/(a_n))', 38),
+  problem('Reynolds Transport Theorem', '(dif)/(dif t) integral_(Omega(t)) f(x, t) dif V = integral_(Omega(t)) (partial f)/(partial t) dif V + integral_(partial Omega(t)) (bold(v) dot hat(bold(n))) f dif A', 40),
+  problem("Cartan's Magic Formula", 'cal(L)_X omega = dif iota_X omega + iota_X dif omega', 28),
+  problem('Spherical Derivative', "f^sharp (z) = (2 abs(f'(z)))/(1 + abs(f(z))^2)", 24),
+  problem('Gradient by Differential Forms', 'nabla f = (dif f)^sharp', 24),
+  problem('Divergence by Differential Forms', 'nabla dot X = star dif star X^flat', 28),
+  problem('Curl by Differential Forms', 'nabla times X = (star dif X^flat)^sharp', 30),
+  problem('Stokes–Cartan Formula', 'integral_(partial M) omega = integral_M dif omega', 28),
+  problem('Schwarz–Christoffel Mapping Formula', 'f(zeta) = integral^zeta K/((w - a)^(1 - alpha/pi) (w - b)^(1 - beta/pi) (w - c)^(1 - gamma/pi) dots.c) dif w', 40),
+  problem('Schrodinger Wave Equation', 'i planck (partial Psi)/(partial t) = -(planck^2)/(2m) nabla^2 Psi + V Psi', 32),
   problem('Chudnovsky Formula for pi', '1/pi = 12 sum_(k=0)^oo ((-1)^k (6 k)! (545140134 k + 13591409))/((3 k)! (k!)^3 640320^(3 k + 3/2))', 42),
 ]
