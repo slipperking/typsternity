@@ -386,7 +386,7 @@ export class TypsterityGame {
     this.setSvg(this.elements.targetBox, null, 'rendering…')
     this.targetResult = await renderFormula(next.src)
     this.setSvg(this.elements.targetBox, this.targetResult, 'render error')
-    this.setSvg(this.elements.yoursBox, null, 'start typing…')
+    this.setSvg(this.elements.yoursBox, null, 'start typing below…')
 
     this.elements.codeInput.focus()
   }
@@ -457,8 +457,11 @@ export class TypsterityGame {
     const svg = boxElement.querySelector('svg')
 
     if (svg) {
-      svg.style.maxHeight = '110px'
+      svg.style.display = 'block'
+      svg.style.maxWidth = '100%'
+      svg.style.maxHeight = '100%'
       svg.style.width = 'auto'
+      svg.style.height = 'auto'
       svg.removeAttribute('width')
       svg.removeAttribute('height')
     }
@@ -469,12 +472,12 @@ export class TypsterityGame {
     this.elements.matchStatus.textContent = ''
 
     if (!value) {
-      this.setSvg(this.elements.yoursBox, null, 'start typing…')
+      this.setSvg(this.elements.yoursBox, null, 'start typing below…')
       return
     }
 
     const userResult = await renderFormula(value)
-    this.setSvg(this.elements.yoursBox, userResult, 'start typing…')
+    this.setSvg(this.elements.yoursBox, userResult, 'start typing below…')
 
     if (userResult.ok && this.targetResult?.ok) {
       const matches = normalizeSvg(userResult.svg) === normalizeSvg(this.targetResult.svg)
@@ -506,8 +509,10 @@ export class TypsterityGame {
     this.history.push({
       name: this.current.name,
       src: this.current.src,
+      attempt: value,
       result: isCorrect ? 'correct' : 'wrong',
       pts: isCorrect ? this.current.pts : 0,
+      svg: this.targetResult?.ok ? this.targetResult.svg : null,
     })
 
     if (isCorrect) {
@@ -531,8 +536,10 @@ export class TypsterityGame {
     this.history.push({
       name: this.current.name,
       src: this.current.src,
+      attempt: this.elements.codeInput.value.trim(),
       result: 'skipped',
       pts: 0,
+      svg: this.targetResult?.ok ? this.targetResult.svg : null,
     })
     this.skippedCount += 1
     this.streak = 0
@@ -547,9 +554,13 @@ export class TypsterityGame {
     this.elements.skippedValue.textContent = String(this.skippedCount)
     this.elements.streakValue.textContent = String(this.bestStreak)
 
+    if (this.history.length === 0) {
+      this.elements.reviewList.innerHTML = '<p class="review-empty">No problems played yet.</p>'
+      return
+    }
+
     this.elements.reviewList.innerHTML = this.history
-      .slice(0, 20)
-      .map((entry) => {
+      .map((entry, index) => {
         const className =
           entry.result === 'correct'
             ? 'r-ok'
@@ -557,8 +568,40 @@ export class TypsterityGame {
               ? 'r-skip'
               : 'r-bad'
         const icon = entry.result === 'correct' ? '✓' : entry.result === 'skipped' ? '→' : '✗'
+        const meta =
+          entry.result === 'correct' ? `+${entry.pts}` : entry.result === 'skipped' ? 'skip' : 'miss'
+        const preview = entry.svg
+          ? `<div class="formula-box review-preview-box">${entry.svg}</div>`
+          : '<div class="formula-box review-preview-box"><span class="err">render unavailable</span></div>'
+        const attempt = entry.attempt
+          ? escapeHtml(entry.attempt)
+          : '<span class="review-code-empty">No code entered.</span>'
 
-        return `<div class="review-row"><span class="${className}">${icon}</span><div class="review-copy"><strong>${entry.name}</strong><code>${entry.src}</code></div><span class="r-pts">${entry.pts > 0 ? `+${entry.pts}` : ''}</span></div>`
+        return `
+          <details class="review-entry">
+            <summary class="review-summary">
+              <span class="review-summary-row">
+                <span class="${className}">${icon}</span>
+                <span class="review-title">${index + 1}. ${escapeHtml(entry.name)}</span>
+                <span class="review-meta">${meta}</span>
+              </span>
+            </summary>
+            <div class="review-detail">
+              <div class="review-block">
+                <div class="sec-label review-block-label">Problem</div>
+                ${preview}
+              </div>
+              <div class="review-block">
+                <div class="sec-label review-block-label">Correct code</div>
+                <pre class="review-code"><code>${escapeHtml(entry.src)}</code></pre>
+              </div>
+              <div class="review-block">
+                <div class="sec-label review-block-label">Your code</div>
+                <pre class="review-code"><code>${attempt}</code></pre>
+              </div>
+            </div>
+          </details>
+        `
       })
       .join('')
   }

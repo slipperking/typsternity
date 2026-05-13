@@ -10,8 +10,10 @@ export interface Problem {
 export interface HistoryEntry {
   name: string
   src: string
+  attempt: string
   result: HistoryResult
   pts: number
+  svg: string | null
 }
 
 export interface RenderSuccess {

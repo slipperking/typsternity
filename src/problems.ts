@@ -24,7 +24,8 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'exists') * 2 +
     countOccurrences(source, 'hat(') +
     countOccurrences(source, 'oo') +
-    countOccurrences(source, 'planck')
+    countOccurrences(source, 'planck') +
+    countOccurrences(source, '(') * 2
 
   return basePoints + lengthBonus + bracketBonus + typingBonus
 }
@@ -79,7 +80,7 @@ export const PROBLEMS: Problem[] = [
   problem('Cauchy–Riemann Equations', '(partial u)/(partial x) = (partial v)/(partial y) "and" (partial u)/(partial y) = -(partial v)/(partial x) ==> (partial f)/(partial overline(z)) = 0', 26),
   problem("Legendre's Formula", 'nu_p (n!) = sum_(i=1)^oo floor(n/(p^i))', 28),
   problem('Fourier Transform', 'hat(f)(omega) = integral_(-oo)^oo f(x) e^(-2 pi i x omega) dif x', 30),
-  problem('Gamma Recurrence', 'Gamma(z + 1) = z Gamma(z)', 22),
+  problem('Gamma Function Recurrence', 'Gamma(z + 1) = z Gamma(z)', 22),
   problem('Beta–Gamma Relation', 'B(x, y) = (Gamma(x) Gamma(y))/Gamma(x + y)', 30),
   problem('Gaussian Integral', 'integral_(-oo)^oo e^(-x^2) dif x = sqrt(pi)', 32),
   problem('Laplace Transform', 'cal(L){f}(s) = integral_0^oo f(t) e^(-s t) dif t', 30),
@@ -123,7 +124,7 @@ export const PROBLEMS: Problem[] = [
   problem('Kronecker Delta Cases', 'delta_(i j) = cases(1 & "if" i = j, 0 & "if" i != j)', 24),
   problem('Modal Distribution', 'square (P -> Q) -> (square P -> square Q)', 24),
   problem('Jensen Formula', 'log abs(f(0)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) dif theta - sum_(abs(a_n) < r) log(r/(abs(a_n)))', 38),
-  problem('Poisson–Jensen Formula', 'log abs(f(z)) = (1/(2 pi)) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 42),
+  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 42),
   problem('Meromorphic Automorphisms of the Riemann Sphere', 'op("PSL")(2, CC) tilde.equiv op("SL")(2, CC) \\/ { plus.minus bold(I) } tilde.equiv op("Aut")(hat(CC))', 34),
   problem('Weierstrass Factorization Theorem', 'f(z) = z^m e^(phi(z)) product_(n=1)^oo E_(p_n)((z)/(a_n))', 38),
   problem('Reynolds Transport Theorem', '(dif)/(dif t) integral_(Omega(t)) f(x, t) dif V = integral_(Omega(t)) (partial f)/(partial t) dif V + integral_(partial Omega(t)) (bold(v) dot hat(bold(n))) f dif A', 40),
@@ -131,6 +132,7 @@ export const PROBLEMS: Problem[] = [
   problem('Spherical Derivative', "f^sharp (z) = (2 abs(f'(z)))/(1 + abs(f(z))^2)", 24),
   problem('Gradient by Differential Forms', 'nabla f = (dif f)^sharp', 24),
   problem('Divergence by Differential Forms', 'nabla dot X = star dif star X^flat', 28),
+  problem("D'Alembertian Operator", 'square = 1/(c^2) (partial^2)/(partial t^2) - (partial^2)/(partial x^2) - (partial^2)/(partial y^2) - (partial^2)/(partial z^2)', 34),
   problem('Curl by Differential Forms', 'nabla times X = (star dif X^flat)^sharp', 30),
   problem('Stokes–Cartan Formula', 'integral_(partial M) omega = integral_M dif omega', 28),
   problem('Schwarz–Christoffel Mapping Formula', 'f(zeta) = integral^zeta K/((w - a)^(1 - alpha/pi) (w - b)^(1 - beta/pi) (w - c)^(1 - gamma/pi) dots.c) dif w', 40),

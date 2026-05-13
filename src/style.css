@@ -218,25 +218,35 @@ code {
 }
 
 .score-el {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-family: var(--sans);
+  font-size: 1.12rem;
+  line-height: 1.1;
 }
 
-.score-el span,
+.score-label {
+  color: var(--muted);
+}
+
+#score-val,
 .timer-el,
 .final-num,
 .stat-number,
 .r-pts,
-.review-row code,
 .ph,
 .err,
 .match-msg {
   font-family: var(--mono);
 }
 
-.score-el span {
-  font-size: 1.2rem;
+#score-val {
+  font-family: inherit;
+  font-size: inherit;
   color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .right-top {
@@ -301,7 +311,6 @@ code {
 }
 
 .formula-box {
-  min-height: 82px;
   margin-bottom: 18px;
   padding: 8px;
   border: 1px solid var(--border);
@@ -313,8 +322,12 @@ code {
 }
 
 .formula-box svg {
-  width: auto;
-  max-height: 110px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.play-formula-box {
+  height: 126px;
 }
 
 .formula-box.match {
@@ -520,36 +533,91 @@ code {
 }
 
 .review {
-  width: min(100%, 560px);
+  width: 100%;
   margin: 0 auto 28px;
   text-align: left;
 }
 
-.review-row {
+.review-empty {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.review-entry {
+  border-bottom: 1px solid #f0e7de;
+  background: rgba(255, 253, 250, 0.7);
+}
+
+.review-entry[open] {
+  background: rgba(255, 253, 250, 0.96);
+}
+
+.review-summary {
+  display: block;
+  cursor: pointer;
+  padding: 10px 12px;
+  list-style: none;
+}
+
+.review-summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-summary-row {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px solid #f0e7de;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
 }
 
-.review-row code {
-  display: block;
-  margin-top: 2px;
+.review-title {
   flex: 1;
-  color: var(--muted);
+}
+
+.review-meta {
+  color: #8d847d;
+  font-family: var(--mono);
   font-size: 0.72rem;
+}
+
+.review-detail {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.review-block {
+  min-width: 0;
+}
+
+.review-block-label {
+  margin-bottom: 6px;
+}
+
+.review-preview-box {
+  height: 126px;
+  margin-bottom: 0;
+}
+
+.review-code {
+  min-height: 88px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  line-height: 1.55;
+  overflow: auto;
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
-.review-copy {
-  flex: 1;
-}
-
-.review-copy strong {
-  display: block;
-  font-weight: 600;
+.review-code-empty {
+  color: #a79d95;
+  font-style: italic;
 }
 
 .r-ok {

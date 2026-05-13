@@ -64,7 +64,7 @@ export function createAppMarkup(): string {
 
         <section id="screen-game" class="screen game-screen" hidden>
           <div class="game-top">
-            <div class="score-el">Score: <span id="score-val">0</span></div>
+            <div class="score-el"><span class="score-label">Score:</span> <span id="score-val">0</span></div>
             <div class="right-top">
               <span class="points-pill points-tier-low" id="points-badge">0 pts</span>
               <div class="timer-el" id="timer-val">3:00</div>
@@ -72,18 +72,18 @@ export function createAppMarkup(): string {
           </div>
 
           <div class="problem-head">
-            <div class="problem-kicker">Current Prompt</div>
+            <div class="problem-kicker">Current Problem</div>
             <div class="problem-name" id="problem-name">Loading problem…</div>
           </div>
 
           <div class="sec-label">Target</div>
-          <div class="formula-box" id="target-box">
+          <div class="formula-box play-formula-box" id="target-box">
             <span class="ph">loading…</span>
           </div>
 
           <div class="sec-label">Your output</div>
-          <div class="formula-box" id="yours-box">
-            <span class="ph">start typing…</span>
+          <div class="formula-box play-formula-box" id="yours-box">
+            <span class="ph">start typing below…</span>
           </div>
 
           <textarea
