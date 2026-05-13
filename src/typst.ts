@@ -20,7 +20,9 @@ let typstReadyPromise: Promise<TypstRuntime> | null = null
 function wrapFormula(source: string): string {
   return `#set page(width: auto, height: auto, margin: (x: 8pt, y: 6pt))
 #set text(size: 20pt)
-$ display(${source}) $`
+$
+${source}
+$`
 }
 
 function getTypstRuntime(): TypstRuntime | null {
