@@ -1,5 +1,5 @@
 export type GameMode = 'timed' | 'zen'
-export type HistoryResult = 'correct' | 'wrong' | 'skipped'
+export type HistoryResult = 'correct' | 'wrong' | 'skipped' | 'ended'
 
 export interface Problem {
   name: string

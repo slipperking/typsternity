@@ -15,6 +15,7 @@ interface GameElements {
   restartButton: HTMLButtonElement
   skipButton: HTMLButtonElement
   endButton: HTMLButtonElement
+  showSolutionButton: HTMLButtonElement
   debugProblemSelect: HTMLSelectElement | null
   debugLoadButton: HTMLButtonElement | null
   debugProblemList: HTMLDivElement | null
@@ -23,7 +24,11 @@ interface GameElements {
   timerValue: HTMLDivElement
   problemName: HTMLDivElement
   targetBox: HTMLDivElement
+  outputHead: HTMLDivElement
   yoursBox: HTMLDivElement
+  solutionLabel: HTMLDivElement
+  solutionPanel: HTMLDivElement
+  solutionCode: HTMLTextAreaElement
   shadowToggle: HTMLInputElement
   yoursShadow: HTMLDivElement
   yoursRender: HTMLDivElement
@@ -106,6 +111,7 @@ export class TypsterityGame {
   private targetResult: RenderResult | null = null
   private userResult: RenderResult | null = null
   private shadowEnabled = false
+  private solutionVisible = false
 
   constructor(root: HTMLElement) {
     this.elements = {
@@ -120,6 +126,7 @@ export class TypsterityGame {
       restartButton: getRequiredElement<HTMLButtonElement>(root, '#btn-restart'),
       skipButton: getRequiredElement<HTMLButtonElement>(root, '#btn-skip'),
       endButton: getRequiredElement<HTMLButtonElement>(root, '#btn-end'),
+      showSolutionButton: getRequiredElement<HTMLButtonElement>(root, '#btn-solution'),
       debugProblemSelect: root.querySelector<HTMLSelectElement>('#debug-problem-select'),
       debugLoadButton: root.querySelector<HTMLButtonElement>('#btn-debug-load'),
       debugProblemList: root.querySelector<HTMLDivElement>('#debug-problem-list'),
@@ -128,7 +135,11 @@ export class TypsterityGame {
       timerValue: getRequiredElement<HTMLDivElement>(root, '#timer-val'),
       problemName: getRequiredElement<HTMLDivElement>(root, '#problem-name'),
       targetBox: getRequiredElement<HTMLDivElement>(root, '#target-box'),
+      outputHead: getRequiredElement<HTMLDivElement>(root, '#output-head'),
       yoursBox: getRequiredElement<HTMLDivElement>(root, '#yours-box'),
+      solutionLabel: getRequiredElement<HTMLDivElement>(root, '#solution-label'),
+      solutionPanel: getRequiredElement<HTMLDivElement>(root, '#solution-panel'),
+      solutionCode: getRequiredElement<HTMLTextAreaElement>(root, '#solution-code'),
       shadowToggle: getRequiredElement<HTMLInputElement>(root, '#shadow-toggle'),
       yoursShadow: getRequiredElement<HTMLDivElement>(root, '#yours-shadow'),
       yoursRender: getRequiredElement<HTMLDivElement>(root, '#yours-render'),
@@ -180,6 +191,10 @@ export class TypsterityGame {
 
     this.elements.endButton.addEventListener('click', () => {
       this.endGame()
+    })
+
+    this.elements.showSolutionButton.addEventListener('click', () => {
+      this.showSolution()
     })
 
     this.elements.shadowToggle.addEventListener('change', () => {
@@ -318,11 +333,13 @@ export class TypsterityGame {
     this.current = null
     this.targetResult = null
     this.userResult = null
+    this.solutionVisible = false
   }
 
   private async startGame(initialProblemIndex?: number): Promise<void> {
     this.clearTimers()
     this.resetRoundState(initialProblemIndex)
+    this.exitSolutionMode()
     this.showScreen('game')
     this.updateScore()
     this.updateTimer()
@@ -391,6 +408,7 @@ export class TypsterityGame {
     }
 
     this.current = next
+    this.exitSolutionMode()
     this.elements.codeInput.value = ''
     this.elements.matchStatus.textContent = ''
     this.elements.problemName.textContent = next.name
@@ -542,7 +560,71 @@ export class TypsterityGame {
     this.renderUserLayer(this.userResult)
   }
 
+  private showSolution(): void {
+    if (!this.current || this.solutionVisible) {
+      return
+    }
+
+    if (this.inputDebounceId !== null) {
+      window.clearTimeout(this.inputDebounceId)
+      this.inputDebounceId = null
+    }
+
+    if (this.advanceTimeoutId !== null) {
+      window.clearTimeout(this.advanceTimeoutId)
+      this.advanceTimeoutId = null
+    }
+
+    this.solutionVisible = true
+    this.elements.outputHead.hidden = true
+    this.elements.yoursBox.hidden = true
+    this.elements.solutionLabel.hidden = false
+    this.elements.solutionPanel.hidden = false
+    this.elements.solutionCode.value = this.current.src
+    this.elements.codeInput.readOnly = true
+    this.elements.codeInput.placeholder = ''
+    this.elements.showSolutionButton.hidden = true
+    this.elements.skipButton.textContent = 'continue'
+    this.elements.matchStatus.textContent = ''
+    this.elements.yoursBox.classList.remove('match')
+    this.elements.skipButton.focus()
+  }
+
+  private exitSolutionMode(): void {
+    this.solutionVisible = false
+    this.elements.outputHead.hidden = false
+    this.elements.yoursBox.hidden = false
+    this.elements.solutionLabel.hidden = true
+    this.elements.solutionPanel.hidden = true
+    this.elements.solutionCode.value = ''
+    this.elements.codeInput.readOnly = false
+    this.elements.codeInput.placeholder = 'type Typst math here…'
+    this.elements.showSolutionButton.hidden = false
+    this.elements.skipButton.textContent = 'skip'
+  }
+
+  private recordCurrentProblemAsEnded(): void {
+    if (!this.current) {
+      return
+    }
+
+    this.history.push({
+      name: this.current.name,
+      src: this.current.src,
+      attempt: this.elements.codeInput.value.trim(),
+      result: 'ended',
+      pts: 0,
+      svg: this.targetResult?.ok ? this.targetResult.svg : null,
+    })
+
+    this.current = null
+  }
+
   private async handleInput(): Promise<void> {
+    if (this.solutionVisible) {
+      return
+    }
+
     const value = this.elements.codeInput.value.trim()
     this.elements.matchStatus.textContent = ''
     this.elements.yoursBox.classList.remove('match')
@@ -560,6 +642,11 @@ export class TypsterityGame {
     }
 
     const userResult = await renderFormula(value)
+
+    if (this.solutionVisible || this.elements.codeInput.value.trim() !== value) {
+      return
+    }
+
     this.userResult = userResult
     this.renderShadowLayer()
     this.renderUserLayer(userResult)
@@ -633,6 +720,8 @@ export class TypsterityGame {
 
   private endGame(): void {
     this.clearTimers()
+    this.recordCurrentProblemAsEnded()
+    this.exitSolutionMode()
     this.showScreen('end')
     this.elements.finalScore.textContent = String(this.score)
     this.elements.correctValue.textContent = String(this.correct)
@@ -651,10 +740,25 @@ export class TypsterityGame {
             ? 'r-ok'
             : entry.result === 'skipped'
               ? 'r-skip'
+              : entry.result === 'ended'
+                ? 'r-end'
               : 'r-bad'
-        const icon = entry.result === 'correct' ? '✓' : entry.result === 'skipped' ? '→' : '✗'
+        const icon =
+          entry.result === 'correct'
+            ? '✓'
+            : entry.result === 'skipped'
+              ? '→'
+              : entry.result === 'ended'
+                ? '■'
+                : '✗'
         const meta =
-          entry.result === 'correct' ? `+${entry.pts}` : entry.result === 'skipped' ? 'skip' : 'miss'
+          entry.result === 'correct'
+            ? `+${entry.pts}`
+            : entry.result === 'skipped'
+              ? 'skip'
+              : entry.result === 'ended'
+                ? 'game ended'
+                : 'miss'
         const preview = entry.svg
           ? `<div class="formula-box review-preview-box">${entry.svg}</div>`
           : '<div class="formula-box review-preview-box"><span class="err">render unavailable</span></div>'

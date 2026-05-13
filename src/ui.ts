@@ -81,7 +81,7 @@ export function createAppMarkup(): string {
             <span class="ph">loading…</span>
           </div>
 
-          <div class="output-head">
+          <div class="output-head" id="output-head">
             <div class="sec-label output-label">Your output</div>
             <label class="shadow-toggle" for="shadow-toggle">
               <input id="shadow-toggle" type="checkbox" />
@@ -94,7 +94,19 @@ export function createAppMarkup(): string {
               <span class="ph">start typing below…</span>
             </div>
           </div>
+          <div class="sec-label" id="solution-label" hidden>Solution</div>
+          <div class="solution-panel" id="solution-panel" hidden>
+            <textarea
+              class="code-input solution-code"
+              id="solution-code"
+              rows="1"
+              spellcheck="false"
+              readonly
+              aria-label="Correct Typst math source"
+            ></textarea>
+          </div>
 
+          <div class="sec-label">Your code</div>
           <textarea
             class="code-input"
             id="code-input"
@@ -110,6 +122,7 @@ export function createAppMarkup(): string {
 
           <div class="bottom-row">
             <button class="skip-link action-link" id="btn-end" type="button">end game</button>
+            <button class="skip-link action-link" id="btn-solution" type="button">show solution</button>
             <button class="skip-link action-link" id="btn-skip" type="button">skip</button>
           </div>
         </section>
