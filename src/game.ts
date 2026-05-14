@@ -110,6 +110,7 @@ export class TypsterityGame {
   private history: HistoryEntry[] = []
   private targetResult: RenderResult | null = null
   private userResult: RenderResult | null = null
+  private reviewRenderId = 0
   private shadowEnabled = false
   private solutionVisible = false
 
@@ -333,6 +334,7 @@ export class TypsterityGame {
     this.current = null
     this.targetResult = null
     this.userResult = null
+    this.reviewRenderId += 1
     this.solutionVisible = false
   }
 
@@ -733,8 +735,20 @@ export class TypsterityGame {
       return
     }
 
-    this.elements.reviewList.innerHTML = this.history
-      .map((entry, index) => {
+    this.elements.reviewList.innerHTML = '<p class="review-empty">Rendering saved attempts…</p>'
+    const reviewRenderId = ++this.reviewRenderId
+    void this.renderReview(reviewRenderId)
+  }
+
+  private async renderReview(reviewRenderId: number): Promise<void> {
+    const reviewEntries = await Promise.all(
+      this.history.map(async (entry, index) => {
+        const correctPreview = this.getReviewPreviewMarkup(entry.svg, 'render unavailable', 'err')
+        const shouldShowUserPreview = entry.result !== 'correct'
+        const userPreview = shouldShowUserPreview
+          ? await this.getUserReviewPreviewMarkup(entry.attempt)
+          : ''
+
         const className =
           entry.result === 'correct'
             ? 'r-ok'
@@ -759,9 +773,6 @@ export class TypsterityGame {
               : entry.result === 'ended'
                 ? 'game ended'
                 : 'miss'
-        const preview = entry.svg
-          ? `<div class="formula-box review-preview-box">${entry.svg}</div>`
-          : '<div class="formula-box review-preview-box"><span class="err">render unavailable</span></div>'
         const attempt = entry.attempt
           ? escapeHtml(entry.attempt)
           : '<span class="review-code-empty">No code entered.</span>'
@@ -777,13 +788,19 @@ export class TypsterityGame {
             </summary>
             <div class="review-detail">
               <div class="review-block">
-                <div class="sec-label review-block-label">Problem</div>
-                ${preview}
+                <div class="sec-label review-block-label">Correct render</div>
+                ${correctPreview}
               </div>
               <div class="review-block">
                 <div class="sec-label review-block-label">Correct code</div>
                 <pre class="review-code"><code>${escapeHtml(entry.src)}</code></pre>
               </div>
+              ${shouldShowUserPreview
+                ? `<div class="review-block">
+                <div class="sec-label review-block-label">Your render</div>
+                ${userPreview}
+              </div>`
+                : ''}
               <div class="review-block">
                 <div class="sec-label review-block-label">Your code</div>
                 <pre class="review-code"><code>${attempt}</code></pre>
@@ -791,7 +808,35 @@ export class TypsterityGame {
             </div>
           </details>
         `
-      })
-      .join('')
+      }),
+    )
+
+    if (reviewRenderId !== this.reviewRenderId) {
+      return
+    }
+
+    this.elements.reviewList.innerHTML = reviewEntries.join('')
+  }
+
+  private async getUserReviewPreviewMarkup(attempt: string): Promise<string> {
+    if (!attempt) {
+      return this.getReviewPreviewMarkup(null, 'No render entered.', 'ph')
+    }
+
+    const result = await renderFormula(attempt)
+
+    return this.getReviewPreviewMarkup(result.ok ? result.svg : null, 'render unavailable', 'err')
+  }
+
+  private getReviewPreviewMarkup(
+    svg: string | null,
+    emptyMessage: string,
+    messageClass: 'err' | 'ph',
+  ): string {
+    if (svg) {
+      return `<div class="formula-box review-preview-box">${svg}</div>`
+    }
+
+    return `<div class="formula-box review-preview-box"><span class="${messageClass}">${emptyMessage}</span></div>`
   }
 }
