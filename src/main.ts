@@ -1,5 +1,5 @@
 import './style.css'
-import { TypsterityGame } from './game'
+import { TypsternityGame } from './game'
 import { createAppMarkup } from './ui'
 import { inject } from "@vercel/analytics"
 
@@ -12,6 +12,6 @@ if (!app) {
 
 app.innerHTML = createAppMarkup()
 
-const game = new TypsterityGame(app)
+const game = new TypsternityGame(app)
 
 void game.initialize()

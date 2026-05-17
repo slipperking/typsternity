@@ -92,7 +92,7 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;')
 }
 
-export class TypsterityGame {
+export class TypsternityGame {
   private readonly elements: GameElements
 
   private mode: GameMode = 'timed'
