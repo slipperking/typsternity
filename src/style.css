@@ -233,8 +233,6 @@ code {
 
 #score-val,
 .timer-el,
-.final-num,
-.stat-number,
 .r-pts,
 .ph,
 .err,
@@ -582,57 +580,112 @@ code {
 
 .final-num {
   font-size: clamp(3.4rem, 8vw, 4.4rem);
+  font-family: var(--sans);
+  font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
 }
 
+.end-overview {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.end-score-card {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
 .end-sub {
-  margin: 8px 0 28px;
+  margin: 10px 0 12px;
   color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.end-high-score {
+  color: #8d847d;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.end-high-score span {
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0;
 }
 
 .stats-row {
   display: flex;
   justify-content: center;
-  gap: 32px;
-  margin-bottom: 28px;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  min-width: 88px;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .stat-number {
   font-size: 1.75rem;
+  font-family: var(--sans);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .stat-label {
   color: #8d847d;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.review-section {
+  margin-bottom: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
 }
 
 .review {
   width: 100%;
-  margin: 0 auto 28px;
+  margin: 0;
   text-align: left;
 }
 
 .review-empty {
   margin: 0;
+  padding: 18px 0 12px;
   color: var(--muted);
   text-align: center;
 }
 
 .review-entry {
+  border-top: 1px solid #f0e7de;
+  background: transparent;
+}
+
+.review-entry:last-child {
   border-bottom: 1px solid #f0e7de;
-  background: rgba(255, 253, 250, 0.7);
 }
 
 .review-entry[open] {
-  background: rgba(255, 253, 250, 0.96);
+  background: transparent;
 }
 
 .review-summary {
   display: block;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 12px 0;
   list-style: none;
 }
 
@@ -644,7 +697,7 @@ code {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .review-title {
@@ -655,12 +708,13 @@ code {
   color: #8d847d;
   font-family: var(--mono);
   font-size: 0.72rem;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .review-detail {
   display: grid;
   gap: 12px;
-  padding: 0 12px 12px;
+  padding: 0 0 14px;
 }
 
 .review-block {
@@ -737,6 +791,7 @@ code {
   .stats-row {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
 
   .right-top {

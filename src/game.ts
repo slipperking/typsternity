@@ -35,11 +35,20 @@ interface GameElements {
   codeInput: HTMLTextAreaElement
   matchStatus: HTMLDivElement
   finalScore: HTMLDivElement
+  timeSpentValue: HTMLDivElement
+  highScoreValue: HTMLSpanElement
   correctValue: HTMLDivElement
   skippedValue: HTMLDivElement
   streakValue: HTMLDivElement
   reviewList: HTMLDivElement
 }
+
+interface HighScores {
+  timed: number
+  zen: number
+}
+
+const HIGH_SCORE_STORAGE_KEY = 'typsternity.high-scores.v1'
 
 function getRequiredElement<TElement extends HTMLElement>(
   root: ParentNode,
@@ -100,6 +109,7 @@ export class TypsternityGame {
   private inputDebounceId: number | null = null
   private advanceTimeoutId: number | null = null
   private timeLeft = 180
+  private sessionStartedAt: number | null = null
   private score = 0
   private correct = 0
   private skippedCount = 0
@@ -147,6 +157,8 @@ export class TypsternityGame {
       codeInput: getRequiredElement<HTMLTextAreaElement>(root, '#code-input'),
       matchStatus: getRequiredElement<HTMLDivElement>(root, '#match-status'),
       finalScore: getRequiredElement<HTMLDivElement>(root, '#final-num'),
+      timeSpentValue: getRequiredElement<HTMLDivElement>(root, '#end-time-spent'),
+      highScoreValue: getRequiredElement<HTMLSpanElement>(root, '#end-high-score'),
       correctValue: getRequiredElement<HTMLDivElement>(root, '#s-correct'),
       skippedValue: getRequiredElement<HTMLDivElement>(root, '#s-skipped'),
       streakValue: getRequiredElement<HTMLDivElement>(root, '#s-streak'),
@@ -335,12 +347,14 @@ export class TypsternityGame {
     this.targetResult = null
     this.userResult = null
     this.reviewRenderId += 1
+    this.sessionStartedAt = null
     this.solutionVisible = false
   }
 
   private async startGame(initialProblemIndex?: number): Promise<void> {
     this.clearTimers()
     this.resetRoundState(initialProblemIndex)
+    this.sessionStartedAt = Date.now()
     this.exitSolutionMode()
     this.showScreen('game')
     this.updateScore()
@@ -549,8 +563,8 @@ export class TypsternityGame {
   private renderShadowLayer(): void {
     const shadowResult =
       this.shadowEnabled &&
-      this.targetResult?.ok &&
-      (!this.userResult || this.userResult.ok)
+        this.targetResult?.ok &&
+        (!this.userResult || this.userResult.ok)
         ? this.targetResult
         : null
     this.setLayerSvg(this.elements.yoursShadow, shadowResult)
@@ -724,8 +738,12 @@ export class TypsternityGame {
     this.clearTimers()
     this.recordCurrentProblemAsEnded()
     this.exitSolutionMode()
+    const elapsedSeconds = this.getElapsedSeconds()
+    const highScore = this.updateStoredHighScore()
     this.showScreen('end')
     this.elements.finalScore.textContent = String(this.score)
+    this.elements.timeSpentValue.textContent = formatDuration(elapsedSeconds)
+    this.elements.highScoreValue.textContent = String(highScore)
     this.elements.correctValue.textContent = String(this.correct)
     this.elements.skippedValue.textContent = String(this.skippedCount)
     this.elements.streakValue.textContent = String(this.bestStreak)
@@ -738,6 +756,76 @@ export class TypsternityGame {
     this.elements.reviewList.innerHTML = '<p class="review-empty">Rendering saved attempts…</p>'
     const reviewRenderId = ++this.reviewRenderId
     void this.renderReview(reviewRenderId)
+  }
+
+  private getElapsedSeconds(): number {
+    if (this.sessionStartedAt === null) {
+      return 0
+    }
+
+    const elapsedByClock = Math.max(0, Math.floor((Date.now() - this.sessionStartedAt) / 1000))
+
+    if (this.mode === 'zen') {
+      return elapsedByClock
+    }
+
+    const elapsedByTimer = 180 - Math.max(this.timeLeft, 0)
+    return Math.min(180, Math.max(elapsedByClock, elapsedByTimer))
+  }
+
+  private updateStoredHighScore(): number {
+    const highScores = this.readHighScores()
+    highScores[this.mode] = Math.max(highScores[this.mode], this.score)
+    this.writeHighScores(highScores)
+    return highScores[this.mode]
+  }
+
+  private readHighScores(): HighScores {
+    const defaultScores: HighScores = { timed: 0, zen: 0 }
+    const storage = this.getStorage()
+
+    if (!storage) {
+      return defaultScores
+    }
+
+    try {
+      const storedValue = storage.getItem(HIGH_SCORE_STORAGE_KEY)
+
+      if (!storedValue) {
+        return defaultScores
+      }
+
+      const parsedValue = JSON.parse(storedValue) as Partial<Record<GameMode, unknown>>
+
+      return {
+        timed: typeof parsedValue.timed === 'number' ? parsedValue.timed : 0,
+        zen: typeof parsedValue.zen === 'number' ? parsedValue.zen : 0,
+      }
+    } catch {
+      return defaultScores
+    }
+  }
+
+  private writeHighScores(highScores: HighScores): void {
+    const storage = this.getStorage()
+
+    if (!storage) {
+      return
+    }
+
+    try {
+      storage.setItem(HIGH_SCORE_STORAGE_KEY, JSON.stringify(highScores))
+    } catch {
+      // Ignore storage failures so gameplay still finishes normally.
+    }
+  }
+
+  private getStorage(): Storage | null {
+    try {
+      return window.localStorage
+    } catch {
+      return null
+    }
   }
 
   private async renderReview(reviewRenderId: number): Promise<void> {
@@ -756,7 +844,7 @@ export class TypsternityGame {
               ? 'r-skip'
               : entry.result === 'ended'
                 ? 'r-end'
-              : 'r-bad'
+                : 'r-bad'
         const icon =
           entry.result === 'correct'
             ? '✓'
@@ -796,11 +884,11 @@ export class TypsternityGame {
                 <pre class="review-code"><code>${escapeHtml(entry.src)}</code></pre>
               </div>
               ${shouldShowUserPreview
-                ? `<div class="review-block">
+            ? `<div class="review-block">
                 <div class="sec-label review-block-label">Your render</div>
                 ${userPreview}
               </div>`
-                : ''}
+            : ''}
               <div class="review-block">
                 <div class="sec-label review-block-label">Your code</div>
                 <pre class="review-code"><code>${attempt}</code></pre>
@@ -839,4 +927,17 @@ export class TypsternityGame {
 
     return `<div class="formula-box review-preview-box"><span class="${messageClass}">${emptyMessage}</span></div>`
   }
+}
+
+function formatDuration(totalSeconds: number): string {
+  const safeTotalSeconds = Math.max(0, totalSeconds)
+  const hours = Math.floor(safeTotalSeconds / 3600)
+  const minutes = Math.floor((safeTotalSeconds % 3600) / 60)
+  const seconds = safeTotalSeconds % 60
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }

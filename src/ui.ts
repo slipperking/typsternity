@@ -128,25 +128,36 @@ export function createAppMarkup(): string {
         </section>
 
         <section id="screen-end" class="screen end-screen" hidden>
-          <div class="final-num" id="final-num">0</div>
-          <div class="end-sub">points</div>
+          <div class="end-overview">
+            <div class="end-score-card">
+              <div class="final-num" id="final-num">0</div>
+              <div class="end-sub">points</div>
+              <div class="end-high-score">high score <span id="end-high-score">0</span></div>
+            </div>
 
-          <div class="stats-row">
-            <div class="stat-box">
-              <div class="stat-number" id="s-correct">0</div>
-              <div class="stat-label">correct</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-number" id="s-skipped">0</div>
-              <div class="stat-label">skipped</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-number" id="s-streak">0</div>
-              <div class="stat-label">best streak</div>
+            <div class="stats-row">
+              <div class="stat-box">
+                <div class="stat-number" id="s-correct">0</div>
+                <div class="stat-label">correct</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number" id="s-skipped">0</div>
+                <div class="stat-label">skipped</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number" id="s-streak">0</div>
+                <div class="stat-label">best streak</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-number" id="end-time-spent">0:00</div>
+                <div class="stat-label">time spent</div>
+              </div>
             </div>
           </div>
 
-          <div class="review" id="review-list"></div>
+          <section class="review-section">
+            <div class="review" id="review-list"></div>
+          </section>
 
           <div class="btn-row">
             <button class="btn" id="btn-restart" type="button">Play Again</button>
