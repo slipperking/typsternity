@@ -163,7 +163,7 @@ export const PROBLEMS: Problem[] = [
   problem('Tensor Product Associativity', '(U times.o V) times.o W tilde.equiv U times.o (V times.o W)', 30),
   problem('Law of Sines', 'a / (sin A) = b / (sin B) = c / (sin C) = 2R', 30),
   problem("Heron's Formula", '[A B C] = sqrt(s(s-a)(s-b)(s-c))', 30),
-  problem("Euler Line", 'O, H, G "are collinear" ==> overline(O G) = 1 / 2 overline(H G)', 28),
+  problem("Euler Line", 'O, H, G "are collinear" ands overline(O G) = 1 / 2 overline(H G)', 28),
   problem("Inradius of a Triangle", 'r = [A B C] / s', 14),
   problem("Circumradius of a Triangle", 'R = (a b c) / (4 [A B C])', 18),
   problem("Stewart's Theorem", 'm a n + a d^2 = b^2 m + c^2 n', 20),
@@ -213,4 +213,5 @@ export const PROBLEMS: Problem[] = [
   problem('Bra-Ket Inner Product', 'lr(chevron.l phi #h(0pt) mid(|) #h(0pt) psi angle.r) = overline(lr(chevron.l psi #h(0pt) mid(|) #h(0pt) phi chevron.r))', 30),
   problem('Born Rule', 'P(a_n) = abs(lr(chevron.l a_n #h(0pt) mid(|) #h(0pt) psi chevron.r))^2', 28),
   problem('Resolution of the Identity', 'sum_n lr(| n angle.r) lr(chevron.l n |) = bold(I)', 32),
+  problem('Antiholomorphic Wirtinger Derivative', '(partial f)/(partial overline(z)) = 1/2 (partial f)/(partial x) + i/2 (partial f)/(partial y)', 32),
 ]
