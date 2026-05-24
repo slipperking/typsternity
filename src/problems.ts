@@ -163,7 +163,7 @@ export const PROBLEMS: Problem[] = [
   problem('Tensor Product Associativity', '(U times.o V) times.o W tilde.equiv U times.o (V times.o W)', 30),
   problem('Law of Sines', 'a / (sin A) = b / (sin B) = c / (sin C) = 2R', 30),
   problem("Heron's Formula", '[A B C] = sqrt(s(s-a)(s-b)(s-c))', 30),
-  problem("Euler Line", 'O, H, G "are collinear" ands overline(O G) = 1 / 2 overline(H G)', 28),
+  problem("Euler Line", 'O, H, G "are collinear" and overline(O G) = 1 / 2 overline(H G)', 28),
   problem("Inradius of a Triangle", 'r = [A B C] / s', 14),
   problem("Circumradius of a Triangle", 'R = (a b c) / (4 [A B C])', 18),
   problem("Stewart's Theorem", 'm a n + a d^2 = b^2 m + c^2 n', 20),
