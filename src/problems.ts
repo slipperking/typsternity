@@ -8,14 +8,14 @@ function scoreProblem(source: string, basePoints: number): number {
   const lengthBonus = Math.floor(source.length / 12)
   const bracketBonus = Math.floor((source.match(/[()[\]{}]/g) ?? []).length / 14)
   const typingBonus =
-    countOccurrences(source, 'bold(') * 2 +
+    countOccurrences(source, 'bold(') * 1 +
     countOccurrences(source, 'partial') * 2 +
     countOccurrences(source, 'dif') +
-    countOccurrences(source, 'integral') * 2 +
-    countOccurrences(source, 'sum_') * 2 +
-    countOccurrences(source, 'product_') * 2 +
+    countOccurrences(source, 'integral') +
+    countOccurrences(source, 'sum_') +
+    countOccurrences(source, 'product_') +
     countOccurrences(source, 'mat(') * 4 +
-    countOccurrences(source, 'nabla') * 2 +
+    countOccurrences(source, 'nabla') +
     countOccurrences(source, 'Gamma') +
     countOccurrences(source, 'Res') * 2 +
     countOccurrences(source, 'overline(') +
@@ -26,7 +26,10 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'oo') +
     countOccurrences(source, '^(') +
     countOccurrences(source, 'planck') +
-    countOccurrences(source, '(') * 2
+    countOccurrences(source, '(') * 2 +
+    countOccurrences(source, ',') +
+    countOccurrences(source, ';') * 2
+  countOccurrences(source, '\\u') * 4
 
   return basePoints + lengthBonus + bracketBonus + typingBonus
 }
@@ -106,8 +109,8 @@ export const PROBLEMS: Problem[] = [
   problem('Lagrange Identity', 'norm(bold(a) times bold(b))^2 = norm(bold(a))^2 norm(bold(b))^2 - (bold(a) dot bold(b))^2', 38),
   problem('Curl of a Curl', 'nabla times (nabla times bold(F)) = nabla (nabla dot bold(F)) - nabla^2 bold(F)', 40),
   problem("Green's Theorem", 'integral.cont_(partial Omega) P dif x + Q dif y = integral.double_Omega ((partial Q)/(partial x) - (partial P)/(partial y)) dif x dif y', 40),
-  problem("Green's First Identity", 'integral.double_Omega (u nabla^2 v + nabla u dot nabla v) dif A = integral.cont_(partial Omega) u (partial v)/(partial bold(hat(n))) dif s', 42),
-  problem("Green's Second Identity", 'integral.double_Omega (u nabla^2 v - v nabla^2 u) dif A = integral.cont_(partial Omega) (u (partial v)/(partial hat(bold(n))) - v (partial u)/(partial hat(bold(n)))) dif s', 42),
+  problem("Green's First Identity", 'integral.double_Omega (u nabla^2 v + nabla u dot nabla v) dif x dif y = integral.cont_(partial Omega) u (partial v)/(partial bold(hat(n))) dif s', 42),
+  problem("Green's Second Identity", 'integral.double_Omega (u nabla^2 v - v nabla^2 u) dif x dif y = integral.cont_(partial Omega) (u (partial v)/(partial hat(bold(n))) - v (partial u)/(partial hat(bold(n)))) dif s', 42),
   problem('Divergence Theorem', 'integral.triple_V nabla dot bold(F) dif x dif y dif z = integral.surf_S bold(F) dot hat(bold(n)) dif S', 42),
   problem("Stokes' Theorem", 'integral.cont_C bold(F) dot dif bold(r) = integral.double_S (nabla times bold(F)) dot hat(bold(n)) dif S', 42),
   problem('Parseval Identity', 'integral_(-oo)^oo abs(f(x))^2 dif x = integral_(-oo)^oo abs(hat(f)(xi))^2 dif xi', 42),
@@ -129,7 +132,7 @@ export const PROBLEMS: Problem[] = [
   problem('Kronecker Delta Cases', 'delta_(i j) = cases(1 & "if" i = j, 0 & "if" i != j)', 24),
   problem('Modal Distribution', 'square (P -> Q) -> (square P -> square Q)', 24),
   problem("Jensen's Formula", 'log abs(f(0)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) dif theta - sum_(abs(a_n) < r) log(r/(abs(a_n)))', 38),
-  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 44),
+  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 48),
   problem('Meromorphic Automorphisms of the Riemann Sphere', 'op("PSL")(2, CC) tilde.equiv op("SL")(2, CC) \\/ { plus.minus bold(I) } tilde.equiv op("Aut")(hat(CC))', 34),
   problem('Weierstrass Factorization Theorem', 'f(z) = z^m e^(phi(z)) product_(n=1)^oo E_(p_n)((z)/(a_n))', 38),
   problem("Binet's Theorem", 'F_n = 1 / sqrt(5) ((1 + sqrt(5)) / 2)^n - 1 / sqrt(5) ((1 - sqrt(5)) / 2)^n', 38),
@@ -214,4 +217,49 @@ export const PROBLEMS: Problem[] = [
   problem('Born Rule', 'P(a_n) = abs(lr(chevron.l a_n #h(0pt) mid(|) #h(0pt) psi chevron.r))^2', 28),
   problem('Resolution of the Identity', 'sum_n lr(| n angle.r) lr(chevron.l n |) = bold(I)', 32),
   problem('Antiholomorphic Wirtinger Derivative', '(partial f)/(partial overline(z)) = 1/2 (partial f)/(partial x) + i/2 (partial f)/(partial y)', 32),
+
+  problem('Stirling Approximation', 'n! asymp sqrt(2 pi n) (n/e)^n', 28),
+  problem('Euler Product Formula', 'zeta(s) = product_(p prime) 1/(1-p^(-s))', 32),
+  problem('Mobius Inversion', 'g(n)=sum_(d divides n)f(d) ==> f(n)=sum_(d divides n)mu(d)g(n/d)', 34),
+  problem('Dirichlet Convolution Identity', '(f * g)(n)=sum_(d divides n) f(d) g(n/d)', 30),
+  problem('Ramanujan Tau Bound', 'abs(tau(p)) <= 2 p^(11/2)', 24),
+  problem('Wilson Theorem', '(p-1)! equiv -1 mod p', 20),
+  problem('Fermat Little Theorem', 'gcd(a,p) = 1 ==> a^(p-1) equiv 1 mod p', 20),
+  problem('Mertens Formula', 'sum_(n<=x) mu(n)=cal(o)(x)', 24),
+  problem('Riemann Mapping Criterion', 'Omega subset.neq CC and pi_1 (Omega) tilde.equiv {e} ==> exists f : Omega -> DD : f "is a biholomorphism"', 28),
+  problem('Argument Principle', '1/(2 pi i) integral.cont_gamma (f\'(z))/f(z) dif z = N - P', 34),
+  problem('Liouville Theorem', 'f "is entire" and exists R>0 : norm(f)_oo <= R ==> exists c in CC : f equiv c', 20),
+  problem('Maximum Modulus Principle', 'max_(z in Omega) abs(f(z)) = max_(z in partial Omega) abs(f(z))', 28),
+  problem('Cauchy Integral Formula', 'f(z)=1/(2 pi i) integral.cont_gamma (f(zeta))/(zeta-z) dif zeta', 34),
+  problem("Cauchy's Estimate", 'abs(f^((n))(z_0)) <= (n! M) / r^n', 24),
+  problem('Residue at Simple Pole', 'limits(op("Res"))_(z=a) f(z)=lim_(z->a)(z-a)f(z)', 30),
+  problem('Residue at Double Pole', 'limits(op("Res"))_(z=a)f(z)=lim_(z->a) dif/(dif z)((z-a)^2 f(z))', 34),
+  problem('Poisson Kernel', 'P_r (theta) = 1/(2 pi) sum_(n=-oo)^oo r^(abs(n)) e^(i n theta)', 30),
+  problem('Heat Equation', '(partial u)/(partial t)=k nabla^2 u', 24),
+  problem('Helmholtz Equation', 'nabla^2 u + lambda u = 0', 22),
+  problem('Poisson Equation', 'nabla^2 u = f', 20),
+  problem('Continuity Equation Fluid', '(partial rho)/(partial t)+nabla dot (rho bold(v))=0', 26),
+  problem('Navier-Stokes', 'rho((partial bold(v))/(partial t)+(bold(v) dot nabla)bold(v))=-nabla p+mu nabla^2 bold(v)', 38),
+  problem('Euler Fluid Equation', '(partial bold(v))/(partial t)+(bold(v) dot nabla)bold(v)=-(1/rho)nabla p', 32),
+  problem('Hamilton Equations', '(dif q_i)/(dif t)=(partial H)/(partial p_i) "and" (dif p_i)/(dif t)=-(partial H)/(partial q_i)', 34),
+  problem('Lagrange Equation', '(dif)/(dif t)(partial L)/(partial dot(q_i))-(partial L)/(partial q_i)=0', 34),
+  problem('Hamilton Jacobi', '(partial S)/(partial t)+H(q,(partial S)/(partial q),t)=0', 32),
+  problem('Noether Current', '(partial j^mu)/(partial x^mu)=0', 22),
+  problem('Klein–Gordon Equation', '(square + m^2) Phi =0', 22),
+  problem('Dirac Equation', '(i Gamma^mu partial_mu - m) Psi=0', 28),
+  problem('Commutator', '[A,B]=A B-B A', 18),
+  problem('Canonical Commutation', '[x,p]=i planck', 18),
+  problem('Heisenberg Uncertainty', 'Delta x Delta p >= planck/2', 22),
+  problem('Schur Decomposition', 'bold(A)=bold(Q) bold(T) bold(Q)^*', 28),
+  problem('Singular Value Decomposition', 'bold(A) = bold(U) bold(Sigma) bold(V)^*, quad bold(Sigma) in RR^(m times n)', 34),
+  problem('Rank Nullity', 'dim ker(T)+dim im(T)=dim V', 20),
+  problem('Gram Determinant', 'det mat(lr(chevron.l v_i,v_j chevron.r)) >=0', 30),
+  problem('Exterior Derivative Nilpotent', 'dif^2 omega =0', 18),
+  problem('Codifferential', 'delta = plus.minus star dif star', 20),
+  problem('Hodge Laplacian', 'Delta = dif delta + delta dif', 24),
+  problem('de Rham Cohomology', 'H^k (M)=ker(dif_k)/im(dif_(k-1))', 26),
+  problem('Universal Coefficient Theorem', 'H^n (X, G) tilde.equiv op("Hom")(H_n (X), G) xor op("Ext")(H_(n-1) (X), G)', 32),
+  problem('Fundamental Group Product', 'pi_1(X times Y) tilde.equiv pi_1(X) times pi_1(Y)', 24),
+  problem('Euler Characteristic', 'chi(M)=sum_(k=0)^n (-1)^k b_k', 24),
+  problem('Gauss Bonnet', 'integral_M K dif A + integral.cont_(partial M) kappa_g dif s =2 pi chi(M)', 34),
 ]
