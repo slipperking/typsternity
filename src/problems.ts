@@ -151,7 +151,7 @@ export const PROBLEMS: Problem[] = [
   problem('Harmonic Conjugates', 'v(z) = v(0) + 1/pi integral.cont.ccw_(partial DD) u(zeta) (Im(z overline(zeta))) / (abs(zeta - z)^2) abs((dif zeta) / zeta)', 38),
   problem('Holomorphic Logarithms', "log(Phi(z)) = integral_(z_0)^z (Phi'(zeta))/(Phi(zeta)) dif zeta + log(Phi(z_0))", 36),
   problem('Abel Summability of Fourier Series', "phi(e^(i theta)) = lim_(rho -> 1^-)1 / (2 pi) sum_(n=-oo)^oo (integral_0^(2 pi) phi(e^(i tau))e^(-i n tau) dif tau) e^(i n theta) rho^(abs(n))", 38),
-  problem('Complex Line Integral Parameterization', "integral.cont_gamma f(z) dif z = integral_a^b f(gamma(t)) gamma'(t) dif t", 34),
+  problem('Complex Line Integral Parameterization', "integral_gamma f(z) dif z = integral_a^b f(gamma(t)) gamma'(t) dif t", 34),
   problem('Cauchy-Hadamard Formula', '1/R = limsup_(n -> oo) root(n, abs(a_n))', 30),
   problem('Set Difference Distribution', '(A union B) without C = (A without C) union (B without C)', 24),
   problem('Proper Subset Chain', 'A subset.neq B and B subset.eq C ==> A subset.neq C', 24),
