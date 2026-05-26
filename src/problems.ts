@@ -219,7 +219,7 @@ export const PROBLEMS: Problem[] = [
   problem('Antiholomorphic Wirtinger Derivative', '(partial f)/(partial overline(z)) = 1/2 (partial f)/(partial x) + i/2 (partial f)/(partial y)', 32),
 
   problem('Stirling Approximation', 'n! asymp sqrt(2 pi n) (n/e)^n', 28),
-  problem('Euler Product Formula', 'zeta(s) = product_(p prime) 1/(1-p^(-s))', 32),
+  problem('Euler Product Formula', 'zeta(s) = product_(p "prime") 1/(1-p^(-s))', 32),
   problem('Mobius Inversion', 'g(n)=sum_(d divides n)f(d) ==> f(n)=sum_(d divides n)mu(d)g(n/d)', 34),
   problem('Dirichlet Convolution Identity', '(f * g)(n)=sum_(d divides n) f(d) g(n/d)', 30),
   problem('Ramanujan Tau Bound', 'abs(tau(p)) <= 2 p^(11/2)', 24),
