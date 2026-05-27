@@ -62,6 +62,13 @@ export function createAppMarkup(): string {
           </div>
         </section>
 
+        <section class="practice-missed-shell" id="practice-missed-shell" hidden>
+          <details class="practice-missed-menu" id="practice-missed-menu">
+            <summary>Practice Missed Problems</summary>
+            <div class="practice-missed-panel" id="practice-missed-panel"></div>
+          </details>
+        </section>
+
         <section id="screen-game" class="screen game-screen" hidden>
           <div class="game-top">
             <div class="score-el"><span class="score-label">Score:</span> <span id="score-val">0</span></div>
@@ -160,7 +167,10 @@ export function createAppMarkup(): string {
           </section>
 
           <div class="btn-row">
-            <button class="btn" id="btn-restart" type="button">Play Again</button>
+            <button class="btn" id="btn-restart" type="button">Home</button>
+          </div>
+          <div class="end-bottom-row" id="practice-missed-section" hidden>
+            <button class="skip-link action-link" id="btn-practice-missed-end" type="button">practice missed problems</button>
           </div>
         </section>
 

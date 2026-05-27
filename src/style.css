@@ -5,6 +5,7 @@
   --paper-shadow: rgba(54, 39, 17, 0.08);
   --ink: #171412;
   --muted: #655d57;
+  --quiet-ink: #8d847d;
   --border: #ddd5cd;
   --border-strong: #b9aea5;
   --soft: #f4efe8;
@@ -26,6 +27,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scrollbar-gutter: stable;
 }
 
 *,
@@ -181,7 +183,7 @@ code {
 }
 
 .btn.primary {
-  padding-inline: 52px;
+  padding-inline: 45px;
   font-size: 1.05rem;
   margin-bottom: 28px;
 }
@@ -200,7 +202,6 @@ code {
 .hints code {
   padding: 1px 5px;
   background: var(--soft);
-  border-radius: 2px;
   font-size: 0.78rem;
 }
 
@@ -283,13 +284,22 @@ code {
   color: var(--accent);
 }
 
+.timer-el.timer-mode-label {
+  min-width: 0;
+  color: var(--quiet-ink);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .problem-head {
   margin-bottom: 14px;
 }
 
 .problem-kicker {
   margin-bottom: 4px;
-  color: #8d847d;
+  color: var(--quiet-ink);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -302,7 +312,7 @@ code {
 
 .sec-label {
   margin-bottom: 8px;
-  color: #8d847d;
+  color: var(--quiet-ink);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -324,7 +334,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted);
+  color: var(--quiet-ink);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -405,7 +415,7 @@ code {
 
 .ph {
   font-size: 0.82rem;
-  color: #b0a8a1;
+  color: var(--quiet-ink);
 }
 
 .err {
@@ -433,7 +443,7 @@ code {
 
 .code-input[readonly] {
   background: var(--soft);
-  color: var(--muted);
+  color: var(--quiet-ink);
   cursor: default;
 }
 
@@ -459,7 +469,7 @@ code {
   padding: 0;
   border: 0;
   background: none;
-  color: #8d847d;
+  color: var(--quiet-ink);
   cursor: pointer;
   text-decoration: underline;
 }
@@ -475,7 +485,7 @@ code {
 
 .action-link {
   font-size: 0.82rem;
-  color: #8d847d;
+  color: var(--quiet-ink);
   white-space: nowrap;
 }
 
@@ -492,7 +502,7 @@ code {
   font-size: 0.82rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--quiet-ink);
 }
 
 .debug-body {
@@ -502,7 +512,7 @@ code {
 }
 
 .debug-label {
-  color: var(--muted);
+  color: var(--quiet-ink);
   font-size: 0.82rem;
 }
 
@@ -555,7 +565,7 @@ code {
 }
 
 .debug-problem-points {
-  color: var(--muted);
+  color: var(--quiet-ink);
   font-size: 0.68rem;
 }
 
@@ -572,7 +582,7 @@ code {
 
 .debug-src {
   display: block;
-  color: var(--muted);
+  color: var(--quiet-ink);
   font-size: 0.62rem;
   line-height: 1.35;
   word-break: break-word;
@@ -600,14 +610,14 @@ code {
 
 .end-sub {
   margin: 10px 0 12px;
-  color: var(--muted);
+  color: var(--quiet-ink);
   font-size: 0.74rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .end-high-score {
-  color: #8d847d;
+  color: var(--quiet-ink);
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -642,7 +652,7 @@ code {
 }
 
 .stat-label {
-  color: #8d847d;
+  color: var(--quiet-ink);
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -685,7 +695,7 @@ code {
 .review-summary {
   display: block;
   cursor: pointer;
-  padding: 12px 0;
+  padding: 9px 0;
   list-style: none;
 }
 
@@ -705,7 +715,7 @@ code {
 }
 
 .review-meta {
-  color: #8d847d;
+  color: var(--quiet-ink);
   font-family: var(--mono);
   font-size: 0.72rem;
   font-variant-numeric: lining-nums tabular-nums;
@@ -823,4 +833,133 @@ code {
   .stats-row {
     gap: 18px;
   }
+}
+
+/* ── Practice Missed ─────────────────────────────────────────────────── */
+.practice-missed-shell {
+  width: min(100%, 760px);
+  margin: 24px auto 0;
+  border: 1px solid var(--border);
+  background: rgba(255, 253, 250, 0.88);
+  box-shadow: 0 16px 36px rgba(54, 39, 17, 0.05);
+}
+
+.practice-missed-menu summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  color: var(--quiet-ink);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.practice-missed-panel {
+  display: grid;
+  gap: 16px;
+  padding: 10px 28px 32px;
+  text-align: left;
+}
+
+.practice-missed-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.practice-missed-panel-label {
+  color: var(--quiet-ink);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.practice-missed-clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--quiet-ink);
+  font-size: 0.72rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.practice-missed-clear:hover {
+  color: var(--ink);
+}
+
+.practice-missed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.practice-missed-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.practice-missed-list li .pm-count {
+  color: var(--quiet-ink);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.btn.primary.practice-start-button {
+  width: fit-content;
+  max-width: 100%;
+  margin: 6px auto 0;
+  justify-self: center;
+  margin-bottom: 0;
+  padding-block: 10px;
+  padding-inline: 22px;
+  font-size: 0.96rem;
+  white-space: nowrap;
+}
+
+.end-bottom-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.practice-missed-end-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--quiet-ink);
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.practice-missed-end-link:hover {
+  color: var(--ink);
+}
+
+/* ── Miss badge in review ────────────────────────────────────────────── */
+.miss-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.66rem;
+  padding: 0 4px;
+  background: transparent;
+  color: var(--quiet-ink);
+  border: 1px solid var(--border);
+  margin-left: 4px;
+  flex-shrink: 0;
+  font-family: var(--mono);
 }

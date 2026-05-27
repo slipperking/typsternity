@@ -14,6 +14,7 @@ export interface HistoryEntry {
   result: HistoryResult
   pts: number
   svg: string | null
+  userSvg: string | null
 }
 
 export interface RenderSuccess {
@@ -28,3 +29,7 @@ export interface RenderFailure {
 }
 
 export type RenderResult = RenderSuccess | RenderFailure
+
+export interface WrongStats {
+  [problemName: string]: number
+}

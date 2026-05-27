@@ -9,7 +9,7 @@ function scoreProblem(source: string, basePoints: number): number {
   const bracketBonus = Math.floor((source.match(/[()[\]{}]/g) ?? []).length / 14)
   const typingBonus =
     countOccurrences(source, 'bold(') * 1 +
-    countOccurrences(source, 'partial') * 2 +
+    countOccurrences(source, 'partial') +
     countOccurrences(source, 'dif') +
     countOccurrences(source, 'integral') +
     countOccurrences(source, 'sum_') +
@@ -20,6 +20,8 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'Res') * 2 +
     countOccurrences(source, 'overline(') +
     countOccurrences(source, 'subset.eq') * 2 +
+    countOccurrences(source, 'thin') * 3 +
+    countOccurrences(source, '"Res"') * 6 +
     countOccurrences(source, 'forall') * 2 +
     countOccurrences(source, 'exists') * 2 +
     countOccurrences(source, 'hat(') +
@@ -116,13 +118,13 @@ export const PROBLEMS: Problem[] = [
   problem('Parseval Identity', 'integral_(-oo)^oo abs(f(x))^2 dif x = integral_(-oo)^oo abs(hat(f)(xi))^2 dif xi', 42),
   problem('Wirtinger Antiholomorphic Chain Rule', '(partial F)/(partial overline(z)) = (partial F)/(partial w) (partial w)/(partial overline(z)) + (partial F)/(partial overline(w)) (partial overline(w))/(partial overline(z))', 34),
   problem('Christoffel Transformation Law', "Gamma^(i')_(j' k') = (partial x^(i'))/(partial x^r) (partial x^p)/(partial x^(j')) (partial x^q)/(partial x^(k')) Gamma^r_(p q) + (partial x^(i'))/(partial x^r) (partial^2 x^r)/(partial x^(j') partial x^(k'))", 40),
-  problem('Global Residue Theorem', 'sum_(k=1)^n limits(op("Res"))_(z = z_k) f(z) + limits(op("Res"))_(z = oo) f(z) = 0', 32),
-  problem('Residue Theorem', 'integral.cont.ccw_gamma f(z) dif z = 2 pi i sum_(k=1)^n limits(op("Res"))_(z = z_k) f(z) op("Ind")_gamma (z_k)', 38),
+  problem('Global Residue Theorem', 'sum_(k=1)^n limits(op("Res"))_(z = z_k) f(z) + limits(op("Res"))_(z = oo) f(z) = 0', 52),
+  problem('Residue Theorem', 'integral.cont.ccw_gamma f(z) dif z = 2 pi i sum_(k=1)^n limits(op("Res"))_(z = z_k) f(z) op("Ind")_gamma (z_k)', 56),
   problem('Second Fundamental Theorem of Nevanlinna Theory', "m(r,f) + sum_(nu=1)^q m(r,a_nu,f) <= 2 T(r,f) - N(r,0,f') - 2 N(r,f) + N(r,f') + S(r,f)", 42),
   problem('Nevanlinna Error Term', "S(r,f) = m(r,(f')/f) + m(r,sum_(nu=1)^q (f')/(f - a_nu)) + q log((3 q)/delta) + log 2 - log abs(c')", 42),
   problem('Nevanlinna Deficiency Relation', 'sum_(a in CC) [delta(a) + theta(a)] <= sum_(a in CC) Theta(a) <= 2', 38),
   problem('Order of a Meromorphic Function', 'rho = limsup_(r -> oo) (log^+ T(r, f))/(log r)', 34),
-  problem("Cartan's Identity", 'T(r, f) = 1/(2 pi) integral_0^(2 pi) N(r, e^(i theta), f) dif theta + cases(log abs(lim_(z -> 0) f(z) z^(inf{k in NN : lim_(z -> 0) f(z) z^k in CC^*})) & "if" f(0) = oo, log^+ abs(f(0)) & "if" f(0) in CC^*, 0 & "if" f(0) = 0)', 42),
+  problem("Cartan's Identity", 'T(r, f) = 1/(2 pi) integral_0^(2 pi) N(r, e^(i theta), f) dif theta + cases(log abs(lim_(z -> 0) f(z) z^(inf{k in NN : lim_(z -> 0) f(z) z^k in CC^*})) & "if" f(0) = oo, log^+ abs(f(0)) & "if" f(0) in CC^*, 0 & "if" f(0) = 0)', 86),
   problem('Analytic Capacity', `gamma(K) = sup { abs(f'(oo)) : f "is holomorphic on" hat(CC) without K and f(hat(CC) without K) subset.eq overline(DD) and f(oo) = 0 }`, 42),
   problem('Cauchy–Pompeiu Formula', 'f(z) = 1/(2 pi i) (integral.cont.ccw_(partial Omega) (f(zeta))/(zeta - z) dif zeta - integral.double_Omega (partial f)/(partial overline(zeta)) (dif overline(zeta) and dif zeta)/(zeta - z))', 42),
   problem('Schwarz Integral Formula', 'f(z) = 1 / (2 pi i) integral.cont.ccw_(abs(zeta) = r) (Re(f(zeta))) / zeta (zeta+z)/(zeta-z)dif zeta + i Im(f(0))', 42),
@@ -132,7 +134,7 @@ export const PROBLEMS: Problem[] = [
   problem('Kronecker Delta Cases', 'delta_(i j) = cases(1 & "if" i = j, 0 & "if" i != j)', 24),
   problem('Modal Distribution', 'square (P -> Q) -> (square P -> square Q)', 24),
   problem("Jensen's Formula", 'log abs(f(0)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) dif theta - sum_(abs(a_n) < r) log(r/(abs(a_n)))', 38),
-  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 48),
+  problem('Poisson–Jensen Formula', 'log abs(f(z)) = 1/(2 pi) integral_0^(2 pi) log abs(f(r e^(i theta))) Re((r e^(i theta) + z)/(r e^(i theta) - z)) dif theta - sum_(abs(a_n) < r) log abs((r (z - a_n))/(r^2 - overline(a_n) z)) + sum_(abs(b_n) < r) log abs((r (z - b_n))/(r^2 - overline(b_n) z))', 86),
   problem('Meromorphic Automorphisms of the Riemann Sphere', 'op("PSL")(2, CC) tilde.equiv op("SL")(2, CC) \\/ { plus.minus bold(I) } tilde.equiv op("Aut")(hat(CC))', 34),
   problem('Weierstrass Factorization Theorem', 'f(z) = z^m e^(phi(z)) product_(n=1)^oo E_(p_n)((z)/(a_n))', 38),
   problem("Binet's Theorem", 'F_n = 1 / sqrt(5) ((1 + sqrt(5)) / 2)^n - 1 / sqrt(5) ((1 - sqrt(5)) / 2)^n', 38),
@@ -146,7 +148,7 @@ export const PROBLEMS: Problem[] = [
   problem('Stokes–Cartan Formula', 'integral_(partial M) omega = integral_M dif omega', 28),
   problem('Schwarz–Christoffel Mapping Formula', 'f(zeta) = integral^zeta K/((w - a)^(1 - alpha/pi) (w - b)^(1 - beta/pi) (w - c)^(1 - gamma/pi) dots.c) dif w', 40),
   problem('Schrodinger Wave Equation', 'i planck (partial Psi)/(partial t) = -(planck^2)/(2m) nabla^2 Psi + V Psi', 32),
-  problem('Chudnovsky Formula for pi', '1/pi = 12 sum_(k=0)^oo ((-1)^k (6 k)! (545140134 k + 13591409))/((3 k)! (k!)^3 640320^(3 k + 3/2))', 42),
+  problem('Chudnovsky Formula for pi', '1/pi = 12 sum_(k=0)^oo ((-1)^k (6 k)! (545140134 k + 13591409))/((3 k)! (k!)^3 640320^(3 k + 3/2))', 60),
   problem('Intermediate in the Tietze–Urysohn–Brouwer Theorem', 'eta_(A,B) (z) = (op("dist")(z,A) - op("dist")(z,B)) / (op("dist")(z,A) + op("dist")(z,B))', 38),
   problem('Riemann Zeta Functional Equation', 'zeta(s) = 2^s pi^(s - 1) sin(pi s/2) Gamma(1 - s) zeta(1 - s)', 38),
   problem('Riemann Zeta-Xi Relation', 'xi(s) = 1/2 s (s - 1) pi^(-s/2) Gamma(s/2) zeta(s)', 38),
@@ -155,7 +157,7 @@ export const PROBLEMS: Problem[] = [
   problem('Holomorphic Logarithms', "log(Phi(z)) = integral_(z_0)^z (Phi'(zeta))/(Phi(zeta)) dif zeta + log(Phi(z_0))", 36),
   problem('Abel Summability of Fourier Series', "phi(e^(i theta)) = lim_(rho -> 1^-)1 / (2 pi) sum_(n=-oo)^oo (integral_0^(2 pi) phi(e^(i tau))e^(-i n tau) dif tau) e^(i n theta) rho^(abs(n))", 38),
   problem('Complex Line Integral Parameterization', "integral_gamma f(z) dif z = integral_a^b f(gamma(t)) gamma'(t) dif t", 34),
-  problem('Cauchy-Hadamard Formula', '1/R = limsup_(n -> oo) root(n, abs(a_n))', 30),
+  problem('Cauchy–Hadamard Formula', '1/R = limsup_(n -> oo) root(n, abs(a_n))', 30),
   problem('Set Difference Distribution', '(A union B) without C = (A without C) union (B without C)', 24),
   problem('Proper Subset Chain', 'A subset.neq B and B subset.eq C ==> A subset.neq C', 24),
   problem('Indexed Union Membership', 'x in union.big_(i=1)^n A_i <==> exists i in NN : i <= n and x in A_i', 28),
@@ -232,8 +234,8 @@ export const PROBLEMS: Problem[] = [
   problem('Maximum Modulus Principle', 'max_(z in Omega) abs(f(z)) = max_(z in partial Omega) abs(f(z))', 28),
   problem('Cauchy–Goursat Formula', 'f(z)=1/(2 pi i) integral.cont_gamma (f(zeta))/(zeta-z) dif zeta', 34),
   problem("Cauchy's Estimate", 'abs(f^((n))(z_0)) <= (n! M) / r^n', 24),
-  problem('Residue at Simple Pole', 'limits(op("Res"))_(z=a) f(z)=lim_(z->a)(z-a)f(z)', 30),
-  problem('Residue at Double Pole', 'limits(op("Res"))_(z=a)f(z)=lim_(z->a) dif/(dif z)((z-a)^2 f(z))', 34),
+  problem('Residue at Simple Pole', 'limits(op("Res"))_(z=a) f(z)=lim_(z->a)(z-a)f(z)', 44),
+  problem('Residue at Double Pole', 'limits(op("Res"))_(z=a)f(z)=lim_(z->a) dif/(dif z)((z-a)^2 f(z))', 52),
   problem('Poisson Kernel', 'P_r (theta) = 1/(2 pi) sum_(n=-oo)^oo r^(abs(n)) e^(i n theta)', 30),
   problem('Heat Equation', '(partial u)/(partial t)=k nabla^2 u', 24),
   problem('Helmholtz Equation', 'nabla^2 u + lambda u = 0', 22),

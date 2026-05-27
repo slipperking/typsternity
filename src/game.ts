@@ -1,7 +1,7 @@
 import { DEBUG_MENU_ENABLED } from './config'
 import { PROBLEMS } from './problems'
 import { initializeTypst, renderFormula } from './typst'
-import type { GameMode, HistoryEntry, Problem, RenderResult } from './types'
+import type { GameMode, HistoryEntry, Problem, RenderResult, WrongStats } from './types'
 
 interface GameElements {
   loading: HTMLDivElement
@@ -9,10 +9,15 @@ interface GameElements {
   startScreen: HTMLElement
   gameScreen: HTMLElement
   endScreen: HTMLElement
+  practiceMissedShell: HTMLElement
+  practiceMissedMenu: HTMLDetailsElement
   timedButton: HTMLButtonElement
   zenButton: HTMLButtonElement
   startButton: HTMLButtonElement
   restartButton: HTMLButtonElement
+  practiceMissedPanel: HTMLDivElement
+  practiceMissedSection: HTMLDivElement
+  practiceMissedEndButton: HTMLButtonElement
   skipButton: HTMLButtonElement
   endButton: HTMLButtonElement
   showSolutionButton: HTMLButtonElement
@@ -49,6 +54,9 @@ interface HighScores {
 }
 
 const HIGH_SCORE_STORAGE_KEY = 'typsternity.high-scores.v1'
+const WRONG_STATS_STORAGE_KEY = 'typsternity.wrong-stats.v1'
+const MAX_PRACTICE_APPEARANCES = 3
+const VALID_PROBLEM_NAMES = new Set(PROBLEMS.map(problem => problem.name))
 
 function getRequiredElement<TElement extends HTMLElement>(
   root: ParentNode,
@@ -123,6 +131,10 @@ export class TypsternityGame {
   private reviewRenderId = 0
   private shadowEnabled = false
   private solutionVisible = false
+  // Track whether we have a confirmed match, so timer-end doesn't lose it
+  private pendingCorrect = false
+  private isPracticeMissedMode = false
+  private practiceAppearances = new Map<string, number>()
 
   constructor(root: HTMLElement) {
     this.elements = {
@@ -131,10 +143,15 @@ export class TypsternityGame {
       startScreen: getRequiredElement<HTMLElement>(root, '#screen-start'),
       gameScreen: getRequiredElement<HTMLElement>(root, '#screen-game'),
       endScreen: getRequiredElement<HTMLElement>(root, '#screen-end'),
+      practiceMissedShell: getRequiredElement<HTMLElement>(root, '#practice-missed-shell'),
+      practiceMissedMenu: getRequiredElement<HTMLDetailsElement>(root, '#practice-missed-menu'),
       timedButton: getRequiredElement<HTMLButtonElement>(root, '#btn-timed'),
       zenButton: getRequiredElement<HTMLButtonElement>(root, '#btn-zen'),
       startButton: getRequiredElement<HTMLButtonElement>(root, '#btn-start'),
       restartButton: getRequiredElement<HTMLButtonElement>(root, '#btn-restart'),
+      practiceMissedPanel: getRequiredElement<HTMLDivElement>(root, '#practice-missed-panel'),
+      practiceMissedSection: getRequiredElement<HTMLDivElement>(root, '#practice-missed-section'),
+      practiceMissedEndButton: getRequiredElement<HTMLButtonElement>(root, '#btn-practice-missed-end'),
       skipButton: getRequiredElement<HTMLButtonElement>(root, '#btn-skip'),
       endButton: getRequiredElement<HTMLButtonElement>(root, '#btn-end'),
       showSolutionButton: getRequiredElement<HTMLButtonElement>(root, '#btn-solution'),
@@ -175,6 +192,7 @@ export class TypsternityGame {
     try {
       await initializeTypst()
       this.elements.loading.hidden = true
+      this.goToStart()
       void this.renderDebugMenuPreviews()
     } catch (error) {
       this.elements.loadMessage.textContent = `Error: ${String(error)}`
@@ -191,11 +209,16 @@ export class TypsternityGame {
     })
 
     this.elements.startButton.addEventListener('click', () => {
+      this.isPracticeMissedMode = false
       void this.startGame()
     })
 
     this.elements.restartButton.addEventListener('click', () => {
       this.goToStart()
+    })
+
+    this.elements.practiceMissedEndButton.addEventListener('click', () => {
+      void this.startPracticeMissed()
     })
 
     this.elements.skipButton.addEventListener('click', () => {
@@ -250,6 +273,12 @@ export class TypsternityGame {
     }
 
     this.elements.codeInput.addEventListener('input', () => {
+      // Clear pendingCorrect if user keeps typing after a match
+      if (this.pendingCorrect) {
+        // Check if value still matches; if not, cancel
+        // (will be re-evaluated in handleInput)
+      }
+
       if (this.inputDebounceId !== null) {
         window.clearTimeout(this.inputDebounceId)
       }
@@ -308,13 +337,74 @@ export class TypsternityGame {
 
   private goToStart(): void {
     this.clearTimers()
+    this.isPracticeMissedMode = false
     this.showScreen('start')
+    this.updatePracticeMissedSection()
+  }
+
+  private getMissedProblems(wrongStats: WrongStats = this.readWrongStats()): Problem[] {
+    return PROBLEMS
+      .filter(problem => (wrongStats[problem.name] ?? 0) > 0)
+      .sort((a, b) => (wrongStats[b.name] ?? 0) - (wrongStats[a.name] ?? 0))
+  }
+
+  private getEligiblePracticeProblems(wrongStats: WrongStats = this.readWrongStats()): Problem[] {
+    return this.getMissedProblems(wrongStats)
+      .filter(problem => (this.practiceAppearances.get(problem.name) ?? 0) < MAX_PRACTICE_APPEARANCES)
+  }
+
+  private updatePracticeMissedSection(): void {
+    const wrongStats = this.readWrongStats()
+    const missed = this.getMissedProblems(wrongStats)
+    const hasMissed = missed.length > 0
+
+    this.elements.practiceMissedShell.hidden = this.elements.startScreen.hidden || !hasMissed
+    this.elements.practiceMissedSection.hidden = !hasMissed
+
+    if (missed.length === 0) {
+      this.elements.practiceMissedMenu.open = false
+      this.elements.practiceMissedPanel.innerHTML = ''
+      return
+    }
+
+    this.elements.practiceMissedMenu.open = false
+    this.renderPracticeMissedPanel(missed, wrongStats)
+  }
+
+  private renderPracticeMissedPanel(missed: Problem[], wrongStats: WrongStats): void {
+    const panel = this.elements.practiceMissedPanel
+
+    const listItems = missed.map(p => {
+      const count = wrongStats[p.name] ?? 0
+      return `<li><span>${escapeHtml(p.name)}</span><span class="pm-count">×${count}</span></li>`
+    }).join('')
+
+    panel.innerHTML = `
+      <div class="practice-missed-panel-head">
+        <span class="practice-missed-panel-label">${missed.length} problem${missed.length === 1 ? '' : 's'} queued</span>
+        <button class="practice-missed-clear" id="btn-pm-clear" type="button">clear list</button>
+      </div>
+      <ul class="practice-missed-list">${listItems}</ul>
+      <button class="btn primary practice-start-button" id="btn-pm-start" type="button">Practice These</button>
+    `
+
+    panel.querySelector('#btn-pm-clear')
+      ?.addEventListener('click', () => {
+        this.clearWrongStats()
+        this.updatePracticeMissedSection()
+      })
+
+    panel.querySelector('#btn-pm-start')
+      ?.addEventListener('click', () => {
+        void this.startPracticeMissed()
+      })
   }
 
   private showScreen(screen: 'start' | 'game' | 'end'): void {
     this.elements.startScreen.hidden = screen !== 'start'
     this.elements.gameScreen.hidden = screen !== 'game'
     this.elements.endScreen.hidden = screen !== 'end'
+    this.elements.practiceMissedShell.hidden = screen !== 'start'
   }
 
   private clearTimers(): void {
@@ -346,9 +436,11 @@ export class TypsternityGame {
     this.current = null
     this.targetResult = null
     this.userResult = null
+    this.pendingCorrect = false
     this.reviewRenderId += 1
     this.sessionStartedAt = null
     this.solutionVisible = false
+    this.practiceAppearances.clear()
   }
 
   private async startGame(initialProblemIndex?: number): Promise<void> {
@@ -366,10 +458,43 @@ export class TypsternityGame {
         this.updateTimer()
 
         if (this.timeLeft <= 0) {
-          this.endGame()
+          // If user had a pending correct answer right at timer end, give them credit
+          if (this.pendingCorrect) {
+            void this.submitAnswer(true)
+          } else {
+            this.endGame()
+          }
         }
       }, 1000)
     }
+
+    await this.nextProblem()
+    this.elements.codeInput.focus()
+  }
+
+  private async startPracticeMissed(): Promise<void> {
+    const wrongStats = this.readWrongStats()
+    const missedProblems = this.getMissedProblems(wrongStats)
+
+    if (missedProblems.length === 0) {
+      this.isPracticeMissedMode = false
+      this.updatePracticeMissedSection()
+      return
+    }
+
+    this.isPracticeMissedMode = true
+    this.clearTimers()
+    this.resetRoundState()
+    this.queue = [...missedProblems]
+    this.practiceAppearances = new Map(missedProblems.map(problem => [problem.name, 0]))
+    this.sessionStartedAt = Date.now()
+    this.exitSolutionMode()
+    this.showScreen('game')
+    this.updateScore()
+    this.updateTimer()
+    // Always zen mode for practice
+    this.timeLeft = Number.POSITIVE_INFINITY
+    this.updateTimer()
 
     await this.nextProblem()
     this.elements.codeInput.focus()
@@ -396,11 +521,13 @@ export class TypsternityGame {
 
   private updateTimer(): void {
     if (!Number.isFinite(this.timeLeft)) {
-      this.elements.timerValue.textContent = '∞'
+      this.elements.timerValue.textContent = this.isPracticeMissedMode ? 'practice' : '∞'
+      this.elements.timerValue.classList.toggle('timer-mode-label', this.isPracticeMissedMode)
       this.elements.timerValue.classList.remove('urgent')
       return
     }
 
+    this.elements.timerValue.classList.remove('timer-mode-label')
     const minutes = Math.floor(this.timeLeft / 60)
     const seconds = this.timeLeft % 60
     this.elements.timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -414,7 +541,18 @@ export class TypsternityGame {
     }
 
     if (this.queue.length === 0) {
-      this.queue = shuffle([...PROBLEMS])
+      if (this.isPracticeMissedMode) {
+        const missedProblems = this.getEligiblePracticeProblems()
+        if (missedProblems.length === 0) {
+          this.current = null
+          this.pendingCorrect = false
+          this.endGame()
+          return
+        }
+        this.queue = shuffle([...missedProblems])
+      } else {
+        this.queue = shuffle([...PROBLEMS])
+      }
     }
 
     const next = this.queue.shift()
@@ -424,6 +562,10 @@ export class TypsternityGame {
     }
 
     this.current = next
+    if (this.isPracticeMissedMode) {
+      this.practiceAppearances.set(next.name, (this.practiceAppearances.get(next.name) ?? 0) + 1)
+    }
+    this.pendingCorrect = false
     this.exitSolutionMode()
     this.elements.codeInput.value = ''
     this.elements.matchStatus.textContent = ''
@@ -552,6 +694,18 @@ export class TypsternityGame {
       svg.removeAttribute('width')
       svg.removeAttribute('height')
     }
+
+    // Focus textarea when user clicks their render (jump-to-input)
+    if (layerElement === this.elements.yoursRender && result?.svg) {
+      const svg = layerElement.querySelector('svg')
+      if (svg && !svg.dataset.jumpBound) {
+        svg.dataset.jumpBound = '1'
+        svg.style.cursor = 'text'
+        svg.addEventListener('click', () => {
+          this.elements.codeInput.focus()
+        }, { passive: true })
+      }
+    }
   }
 
   private renderUserLayer(result: RenderResult | null): void {
@@ -624,14 +778,33 @@ export class TypsternityGame {
       return
     }
 
-    this.history.push({
-      name: this.current.name,
-      src: this.current.src,
-      attempt: this.elements.codeInput.value.trim(),
-      result: 'ended',
-      pts: 0,
-      svg: this.targetResult?.ok ? this.targetResult.svg : null,
-    })
+    // If there's a pending correct answer right at game end, credit it
+    if (this.pendingCorrect) {
+      this.history.push({
+        name: this.current.name,
+        src: this.current.src,
+        attempt: this.elements.codeInput.value.trim(),
+        result: 'correct',
+        pts: this.current.pts,
+        svg: this.targetResult?.ok ? this.targetResult.svg : null,
+        userSvg: this.userResult?.ok ? this.userResult.svg : null,
+      })
+      this.correct += 1
+      this.streak += 1
+      this.bestStreak = Math.max(this.bestStreak, this.streak)
+      this.score += this.current.pts
+      this.recordCorrect(this.current.name)
+    } else {
+      this.history.push({
+        name: this.current.name,
+        src: this.current.src,
+        attempt: this.elements.codeInput.value.trim(),
+        result: 'ended',
+        pts: 0,
+        svg: this.targetResult?.ok ? this.targetResult.svg : null,
+        userSvg: this.userResult?.ok ? this.userResult.svg : null,
+      })
+    }
 
     this.current = null
   }
@@ -644,6 +817,7 @@ export class TypsternityGame {
     const value = this.elements.codeInput.value.trim()
     this.elements.matchStatus.textContent = ''
     this.elements.yoursBox.classList.remove('match')
+    this.pendingCorrect = false
 
     if (this.advanceTimeoutId !== null) {
       window.clearTimeout(this.advanceTimeoutId)
@@ -673,6 +847,7 @@ export class TypsternityGame {
       if (matches) {
         this.elements.yoursBox.classList.add('match')
         this.elements.matchStatus.innerHTML = '<span class="match-msg">✓ Match!</span>'
+        this.pendingCorrect = true
 
         if (this.advanceTimeoutId !== null) {
           window.clearTimeout(this.advanceTimeoutId)
@@ -685,14 +860,19 @@ export class TypsternityGame {
     }
   }
 
-  private async submitAnswer(): Promise<void> {
+  private async submitAnswer(fromTimer = false): Promise<void> {
     const value = this.elements.codeInput.value.trim()
 
     if (!value || !this.current) {
       return
     }
 
-    const isCorrect = this.elements.yoursBox.classList.contains('match')
+    // On timer-triggered submit, re-check match state using pendingCorrect
+    const isCorrect = fromTimer
+      ? this.pendingCorrect
+      : this.elements.yoursBox.classList.contains('match')
+
+    const problemName = this.current.name
 
     this.history.push({
       name: this.current.name,
@@ -701,6 +881,7 @@ export class TypsternityGame {
       result: isCorrect ? 'correct' : 'wrong',
       pts: isCorrect ? this.current.pts : 0,
       svg: this.targetResult?.ok ? this.targetResult.svg : null,
+      userSvg: this.userResult?.ok ? this.userResult.svg : null,
     })
 
     if (isCorrect) {
@@ -709,17 +890,29 @@ export class TypsternityGame {
       this.bestStreak = Math.max(this.bestStreak, this.streak)
       this.score += this.current.pts
       this.updateScore()
+      this.recordCorrect(problemName)
     } else {
       this.streak = 0
+      if (!this.isPracticeMissedMode) {
+        this.recordWrong(problemName)
+      }
     }
 
-    await this.nextProblem()
+    this.pendingCorrect = false
+
+    if (fromTimer) {
+      this.endGame()
+    } else {
+      await this.nextProblem()
+    }
   }
 
   private async skip(): Promise<void> {
     if (!this.current) {
       return
     }
+
+    const problemName = this.current.name
 
     this.history.push({
       name: this.current.name,
@@ -728,9 +921,16 @@ export class TypsternityGame {
       result: 'skipped',
       pts: 0,
       svg: this.targetResult?.ok ? this.targetResult.svg : null,
+      userSvg: this.userResult?.ok ? this.userResult.svg : null,
     })
-    this.skippedCount += 1
+    if (!this.isPracticeMissedMode) {
+      this.skippedCount += 1
+    }
     this.streak = 0
+    this.pendingCorrect = false
+    if (!this.isPracticeMissedMode) {
+      this.recordWrong(problemName)
+    }
     await this.nextProblem()
   }
 
@@ -747,6 +947,7 @@ export class TypsternityGame {
     this.elements.correctValue.textContent = String(this.correct)
     this.elements.skippedValue.textContent = String(this.skippedCount)
     this.elements.streakValue.textContent = String(this.bestStreak)
+    this.updatePracticeMissedSection()
 
     if (this.history.length === 0) {
       this.elements.reviewList.innerHTML = '<p class="review-empty">No problems played yet.</p>'
@@ -765,7 +966,7 @@ export class TypsternityGame {
 
     const elapsedByClock = Math.max(0, Math.floor((Date.now() - this.sessionStartedAt) / 1000))
 
-    if (this.mode === 'zen') {
+    if (this.mode === 'zen' || this.isPracticeMissedMode) {
       return elapsedByClock
     }
 
@@ -816,8 +1017,83 @@ export class TypsternityGame {
     try {
       storage.setItem(HIGH_SCORE_STORAGE_KEY, JSON.stringify(highScores))
     } catch {
-      // Ignore storage failures so gameplay still finishes normally.
+      // Ignore storage failures
     }
+  }
+
+  // ── Wrong-problem tracking ───────────────────────────────────────────────
+
+  private readWrongStats(): WrongStats {
+    const storage = this.getStorage()
+    if (!storage) return {}
+
+    try {
+      const raw = storage.getItem(WRONG_STATS_STORAGE_KEY)
+      if (!raw) return {}
+      const parsed = JSON.parse(raw) as unknown
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+      const stats: WrongStats = {}
+      let changed = false
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v !== 'number' || !Number.isFinite(v)) {
+          changed = true
+          continue
+        }
+
+        const count = Math.floor(v)
+        if (count <= 0 || !VALID_PROBLEM_NAMES.has(k)) {
+          changed = true
+          continue
+        }
+
+        if (count !== v) {
+          changed = true
+        }
+
+        stats[k] = count
+      }
+
+      if (changed) {
+        if (Object.keys(stats).length === 0) {
+          this.clearWrongStats()
+        } else {
+          this.writeWrongStats(stats)
+        }
+      }
+      return stats
+    } catch {
+      return {}
+    }
+  }
+
+  private writeWrongStats(stats: WrongStats): void {
+    const storage = this.getStorage()
+    if (!storage) return
+    try {
+      storage.setItem(WRONG_STATS_STORAGE_KEY, JSON.stringify(stats))
+    } catch { /* ignore */ }
+  }
+
+  private recordWrong(problemName: string): void {
+    const stats = this.readWrongStats()
+    stats[problemName] = (stats[problemName] ?? 0) + 1
+    this.writeWrongStats(stats)
+  }
+
+  private recordCorrect(problemName: string): void {
+    const stats = this.readWrongStats()
+    if (stats[problemName]) {
+      delete stats[problemName]
+    }
+    this.writeWrongStats(stats)
+  }
+
+  private clearWrongStats(): void {
+    const storage = this.getStorage()
+    if (!storage) return
+    try {
+      storage.removeItem(WRONG_STATS_STORAGE_KEY)
+    } catch { /* ignore */ }
   }
 
   private getStorage(): Storage | null {
@@ -829,13 +1105,24 @@ export class TypsternityGame {
   }
 
   private async renderReview(reviewRenderId: number): Promise<void> {
+    const wrongStats = this.readWrongStats()
+
     const reviewEntries = await Promise.all(
       this.history.map(async (entry, index) => {
-        const correctPreview = this.getReviewPreviewMarkup(entry.svg, 'render unavailable', 'err')
+        // Always show a render for the correct formula — even on parse error, show the box
+        const correctPreview = this.getReviewPreviewMarkup(entry.svg, 'render unavailable', 'err', true)
+
         const shouldShowUserPreview = entry.result !== 'correct'
-        const userPreview = shouldShowUserPreview
-          ? await this.getUserReviewPreviewMarkup(entry.attempt)
-          : ''
+        let userPreview = ''
+
+        if (shouldShowUserPreview) {
+          if (entry.userSvg) {
+            // We already have the SVG from when user played — use it directly
+            userPreview = this.getReviewPreviewMarkup(entry.userSvg, 'no render', 'err', false)
+          } else {
+            userPreview = await this.getUserReviewPreviewMarkup(entry.attempt)
+          }
+        }
 
         const className =
           entry.result === 'correct'
@@ -865,6 +1152,11 @@ export class TypsternityGame {
           ? escapeHtml(entry.attempt)
           : '<span class="review-code-empty">No code entered.</span>'
 
+        const missCount = wrongStats[entry.name] ?? 0
+        const missTag = missCount > 0
+          ? `<span class="miss-badge" title="Missed ${missCount} time(s) across sessions">×${missCount}</span>`
+          : ''
+
         return `
           <details class="review-entry">
             <summary class="review-summary">
@@ -872,6 +1164,7 @@ export class TypsternityGame {
                 <span class="${className}">${icon}</span>
                 <span class="review-title">${index + 1}. ${escapeHtml(entry.name)}</span>
                 <span class="review-meta">${meta}</span>
+                ${missTag}
               </span>
             </summary>
             <div class="review-detail">
@@ -908,23 +1201,31 @@ export class TypsternityGame {
 
   private async getUserReviewPreviewMarkup(attempt: string): Promise<string> {
     if (!attempt) {
-      return this.getReviewPreviewMarkup(null, 'No render entered.', 'ph')
+      return this.getReviewPreviewMarkup(null, 'No code entered.', 'ph', true)
     }
 
     const result = await renderFormula(attempt)
 
-    return this.getReviewPreviewMarkup(result.ok ? result.svg : null, 'render unavailable', 'err')
+    // Always show something — even on parse error
+    return this.getReviewPreviewMarkup(
+      result.ok ? result.svg : null,
+      result.ok ? 'render unavailable' : 'parse error',
+      result.ok ? 'err' : 'err',
+      true,
+    )
   }
 
   private getReviewPreviewMarkup(
     svg: string | null,
     emptyMessage: string,
     messageClass: 'err' | 'ph',
+    _alwaysShowBox: boolean,
   ): string {
     if (svg) {
       return `<div class="formula-box review-preview-box">${svg}</div>`
     }
 
+    // Always render a visible box — never silently omit
     return `<div class="formula-box review-preview-box"><span class="${messageClass}">${emptyMessage}</span></div>`
   }
 }
