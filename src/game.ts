@@ -131,6 +131,7 @@ export class TypsternityGame {
   private reviewRenderId = 0
   private shadowEnabled = false
   private solutionVisible = false
+  private inputGeneration = 0
   // Track whether we have a confirmed match, so timer-end doesn't lose it
   private pendingCorrect = false
   private isPracticeMissedMode = false
@@ -226,11 +227,11 @@ export class TypsternityGame {
     })
 
     this.elements.endButton.addEventListener('click', () => {
-      this.endGame()
+      void this.endGame()
     })
 
     this.elements.showSolutionButton.addEventListener('click', () => {
-      this.showSolution()
+      void this.showSolution()
     })
 
     this.elements.shadowToggle.addEventListener('change', () => {
@@ -273,19 +274,7 @@ export class TypsternityGame {
     }
 
     this.elements.codeInput.addEventListener('input', () => {
-      // Clear pendingCorrect if user keeps typing after a match
-      if (this.pendingCorrect) {
-        // Check if value still matches; if not, cancel
-        // (will be re-evaluated in handleInput)
-      }
-
-      if (this.inputDebounceId !== null) {
-        window.clearTimeout(this.inputDebounceId)
-      }
-
-      this.inputDebounceId = window.setTimeout(() => {
-        void this.handleInput()
-      }, 400)
+      this.queueInputEvaluation()
     })
 
     this.elements.codeInput.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -424,6 +413,39 @@ export class TypsternityGame {
     }
   }
 
+  private queueInputEvaluation(): void {
+    this.inputGeneration += 1
+
+    this.pendingCorrect = false
+    this.elements.yoursBox.classList.remove('match')
+    this.elements.matchStatus.textContent = ''
+
+    if (this.advanceTimeoutId !== null) {
+      window.clearTimeout(this.advanceTimeoutId)
+      this.advanceTimeoutId = null
+    }
+
+    if (this.inputDebounceId !== null) {
+      window.clearTimeout(this.inputDebounceId)
+    }
+
+    const generation = this.inputGeneration
+    this.inputDebounceId = window.setTimeout(() => {
+      void this.evaluateInput(generation, true)
+    }, 400)
+  }
+
+  private async flushInputEvaluation(): Promise<boolean> {
+    this.inputGeneration += 1
+
+    if (this.inputDebounceId !== null) {
+      window.clearTimeout(this.inputDebounceId)
+      this.inputDebounceId = null
+    }
+
+    return await this.evaluateInput(this.inputGeneration, false)
+  }
+
   private resetRoundState(initialProblemIndex?: number): void {
     this.score = 0
     this.correct = 0
@@ -454,22 +476,30 @@ export class TypsternityGame {
 
     if (this.mode === 'timed') {
       this.timerId = window.setInterval(() => {
-        this.timeLeft -= 1
-        this.updateTimer()
-
-        if (this.timeLeft <= 0) {
-          // If user had a pending correct answer right at timer end, give them credit
-          if (this.pendingCorrect) {
-            void this.submitAnswer(true)
-          } else {
-            this.endGame()
-          }
-        }
+        void this.handleTimerTick()
       }, 1000)
     }
 
     await this.nextProblem()
     this.elements.codeInput.focus()
+  }
+
+  private async handleTimerTick(): Promise<void> {
+    this.timeLeft -= 1
+    this.updateTimer()
+
+    if (this.timeLeft > 0) {
+      return
+    }
+
+    const matched = await this.flushInputEvaluation()
+
+    if (matched || this.pendingCorrect) {
+      await this.submitAnswer(true, true)
+      return
+    }
+
+    void this.endGame()
   }
 
   private async startPracticeMissed(): Promise<void> {
@@ -546,7 +576,7 @@ export class TypsternityGame {
         if (missedProblems.length === 0) {
           this.current = null
           this.pendingCorrect = false
-          this.endGame()
+          void this.endGame()
           return
         }
         this.queue = shuffle([...missedProblems])
@@ -601,6 +631,8 @@ export class TypsternityGame {
   }
 
   private async loadProblemByIndex(problemIndex: number): Promise<void> {
+    await this.flushInputEvaluation()
+
     if (this.elements.gameScreen.hidden) {
       await this.startGame(problemIndex)
       return
@@ -730,14 +762,16 @@ export class TypsternityGame {
     this.renderUserLayer(this.userResult)
   }
 
-  private showSolution(): void {
+  private async showSolution(): Promise<void> {
     if (!this.current || this.solutionVisible) {
       return
     }
 
-    if (this.inputDebounceId !== null) {
-      window.clearTimeout(this.inputDebounceId)
-      this.inputDebounceId = null
+    const current = this.current
+    await this.flushInputEvaluation()
+
+    if (this.current !== current || this.solutionVisible) {
+      return
     }
 
     if (this.advanceTimeoutId !== null) {
@@ -750,7 +784,7 @@ export class TypsternityGame {
     this.elements.yoursBox.hidden = true
     this.elements.solutionLabel.hidden = false
     this.elements.solutionPanel.hidden = false
-    this.elements.solutionCode.value = this.current.src
+    this.elements.solutionCode.value = current.src
     this.elements.codeInput.readOnly = true
     this.elements.codeInput.placeholder = ''
     this.elements.showSolutionButton.hidden = true
@@ -809,9 +843,9 @@ export class TypsternityGame {
     this.current = null
   }
 
-  private async handleInput(): Promise<void> {
+  private async evaluateInput(generation: number, allowAutoAdvance: boolean): Promise<boolean> {
     if (this.solutionVisible) {
-      return
+      return false
     }
 
     const value = this.elements.codeInput.value.trim()
@@ -828,13 +862,17 @@ export class TypsternityGame {
       this.userResult = null
       this.renderShadowLayer()
       this.renderUserLayer(null)
-      return
+      return false
     }
 
     const userResult = await renderFormula(value)
 
-    if (this.solutionVisible || this.elements.codeInput.value.trim() !== value) {
-      return
+    if (
+      this.solutionVisible ||
+      generation !== this.inputGeneration ||
+      this.elements.codeInput.value.trim() !== value
+    ) {
+      return false
     }
 
     this.userResult = userResult
@@ -849,18 +887,26 @@ export class TypsternityGame {
         this.elements.matchStatus.innerHTML = '<span class="match-msg">✓ Match!</span>'
         this.pendingCorrect = true
 
-        if (this.advanceTimeoutId !== null) {
-          window.clearTimeout(this.advanceTimeoutId)
-        }
+        if (allowAutoAdvance) {
+          if (this.advanceTimeoutId !== null) {
+            window.clearTimeout(this.advanceTimeoutId)
+          }
 
-        this.advanceTimeoutId = window.setTimeout(() => {
-          void this.submitAnswer()
-        }, 600)
+          this.advanceTimeoutId = window.setTimeout(() => {
+            void this.submitAnswer()
+          }, 600)
+        }
       }
     }
+
+    return this.pendingCorrect
   }
 
-  private async submitAnswer(fromTimer = false): Promise<void> {
+  private async submitAnswer(fromTimer = false, skipFlush = false): Promise<void> {
+    if (!skipFlush) {
+      await this.flushInputEvaluation()
+    }
+
     const value = this.elements.codeInput.value.trim()
 
     if (!value || !this.current) {
@@ -901,7 +947,7 @@ export class TypsternityGame {
     this.pendingCorrect = false
 
     if (fromTimer) {
-      this.endGame()
+      await this.endGame()
     } else {
       await this.nextProblem()
     }
@@ -911,6 +957,8 @@ export class TypsternityGame {
     if (!this.current) {
       return
     }
+
+    await this.flushInputEvaluation()
 
     const problemName = this.current.name
 
@@ -934,7 +982,8 @@ export class TypsternityGame {
     await this.nextProblem()
   }
 
-  private endGame(): void {
+  private async endGame(): Promise<void> {
+    await this.flushInputEvaluation()
     this.clearTimers()
     this.recordCurrentProblemAsEnded()
     this.exitSolutionMode()
