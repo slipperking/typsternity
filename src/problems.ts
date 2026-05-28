@@ -30,8 +30,8 @@ function scoreProblem(source: string, basePoints: number): number {
     countOccurrences(source, 'planck') +
     countOccurrences(source, '(') * 2 +
     countOccurrences(source, ',') +
-    countOccurrences(source, ';') * 2
-  countOccurrences(source, '\\u') * 4
+    countOccurrences(source, ';') * 2 +
+    countOccurrences(source, '\\u') * 4
 
   return basePoints + lengthBonus + bracketBonus + typingBonus
 }
