@@ -1,5 +1,6 @@
 import { DEBUG_MENU_ENABLED } from './config'
 import { PROBLEMS } from './problems'
+import { hashSvgRaster } from './svg-raster'
 import { initializeTypst, renderFormula } from './typst'
 import type { GameMode, HistoryEntry, Problem, RenderResult, WrongStats } from './types'
 
@@ -127,6 +128,7 @@ export class TypsternityGame {
   private current: Problem | null = null
   private history: HistoryEntry[] = []
   private targetResult: RenderResult | null = null
+  private targetRasterHash: Promise<string | null> | null = null
   private userResult: RenderResult | null = null
   private reviewRenderId = 0
   private shadowEnabled = false
@@ -450,6 +452,7 @@ export class TypsternityGame {
     this.queue = this.buildQueue(initialProblemIndex)
     this.current = null
     this.targetResult = null
+    this.targetRasterHash = null
     this.userResult = null
     this.pendingCorrect = false
     this.reviewRenderId += 1
@@ -598,10 +601,17 @@ export class TypsternityGame {
 
     this.setSvg(this.elements.targetBox, null, 'rendering…')
     this.targetResult = null
+    this.targetRasterHash = null
     this.userResult = null
     this.elements.yoursBox.classList.remove('match')
     this.renderShadowLayer()
     this.targetResult = await renderFormula(next.src)
+    if (this.targetResult.ok) {
+      this.targetRasterHash = hashSvgRaster(this.targetResult.svg).catch(error => {
+        console.error('Could not hash target SVG raster.', error)
+        return null
+      })
+    }
     this.setSvg(this.elements.targetBox, this.targetResult, 'render error')
     this.renderShadowLayer()
     this.renderUserLayer(null)
@@ -873,7 +883,26 @@ export class TypsternityGame {
     this.renderUserLayer(userResult)
 
     if (userResult.ok && this.targetResult?.ok) {
-      const matches = normalizeSvg(userResult.svg) === normalizeSvg(this.targetResult.svg)
+      const userRasterHash = await hashSvgRaster(userResult.svg).catch(error => {
+        console.error('Could not hash user SVG raster.', error)
+        return null
+      })
+      const targetRasterHash = await this.targetRasterHash
+
+      if (
+        this.solutionVisible ||
+        generation !== this.inputGeneration ||
+        this.elements.codeInput.value.trim() !== value
+      ) {
+        return false
+      }
+
+      // Keep the old comparison as a fail-safe for browsers that cannot read
+      // SVG pixels from a canvas. Normal matching is based on raster hashes.
+      const matches =
+        userRasterHash !== null && targetRasterHash !== null
+          ? userRasterHash === targetRasterHash
+          : normalizeSvg(userResult.svg) === normalizeSvg(this.targetResult.svg)
 
       if (matches) {
         this.elements.yoursBox.classList.add('match')
