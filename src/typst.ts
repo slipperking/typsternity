@@ -17,9 +17,11 @@ const RENDERER_WASM_URL =
 
 let typstReadyPromise: Promise<TypstRuntime> | null = null
 
-function wrapFormula(source: string): string {
+function wrapFormula(source: string, preamble = ''): string {
+  const preambleBlock = preamble.trim() ? `${preamble.trim()}\n` : ''
+
   return `#set page(width: auto, height: auto, margin: (x: 8pt, y: 6pt))
-$
+${preambleBlock}$
 ${source}
 $`
 }
@@ -88,10 +90,10 @@ export async function initializeTypst(): Promise<void> {
   await ensureTypstReady()
 }
 
-export async function renderFormula(source: string): Promise<RenderResult> {
+export async function renderFormula(source: string, preamble = ''): Promise<RenderResult> {
   try {
     const typst = await ensureTypstReady()
-    const svg = await typst.svg({ mainContent: wrapFormula(source) })
+    const svg = await typst.svg({ mainContent: wrapFormula(source, preamble) })
     return { ok: true, svg }
   } catch (error) {
     return { ok: false, svg: null, err: String(error) }

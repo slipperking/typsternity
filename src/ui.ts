@@ -60,6 +60,8 @@ export function createAppMarkup(): string {
               <small>Inspired by <a href="https://texnique.xyz/" target="_blank" rel="noreferrer noopener">Texnique</a></small>
             </div>
           </div>
+
+          <button class="skip-link action-link preamble-trigger" id="btn-preamble" type="button">preamble</button>
         </section>
 
         <section class="practice-missed-shell" id="practice-missed-shell" hidden>
@@ -176,6 +178,28 @@ export function createAppMarkup(): string {
 
         ${debugMarkup}
       </main>
+
+      <dialog class="preamble-dialog" id="preamble-dialog" aria-labelledby="preamble-title">
+        <form class="preamble-form" id="preamble-form" method="dialog">
+          <div class="preamble-heading">
+            <h2 id="preamble-title">Preamble</h2>
+            <p>Added before the math block whenever your input is rendered.</p>
+          </div>
+          <label class="sec-label" for="preamble-input">Typst preamble</label>
+          <textarea
+            class="code-input preamble-input"
+            id="preamble-input"
+            rows="7"
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+          ></textarea>
+          <div class="preamble-actions">
+            <button class="skip-link action-link" id="btn-preamble-cancel" type="button">cancel</button>
+            <button class="btn preamble-save" type="submit">Save</button>
+          </div>
+        </form>
+      </dialog>
     </div>
   `
 }

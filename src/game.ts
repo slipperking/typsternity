@@ -47,6 +47,11 @@ interface GameElements {
   skippedValue: HTMLDivElement
   streakValue: HTMLDivElement
   reviewList: HTMLDivElement
+  preambleButton: HTMLButtonElement
+  preambleDialog: HTMLDialogElement
+  preambleForm: HTMLFormElement
+  preambleInput: HTMLTextAreaElement
+  preambleCancelButton: HTMLButtonElement
 }
 
 interface HighScores {
@@ -56,6 +61,7 @@ interface HighScores {
 
 const HIGH_SCORE_STORAGE_KEY = 'typsternity.high-scores.v1'
 const WRONG_STATS_STORAGE_KEY = 'typsternity.wrong-stats.v1'
+const PREAMBLE_STORAGE_KEY = 'typsternity.preamble.v1'
 const MAX_PRACTICE_APPEARANCES = 3
 const VALID_PROBLEM_NAMES = new Set(PROBLEMS.map(problem => problem.name))
 
@@ -138,6 +144,7 @@ export class TypsternityGame {
   private pendingCorrect = false
   private isPracticeMissedMode = false
   private practiceAppearances = new Map<string, number>()
+  private preamble = ''
 
   constructor(root: HTMLElement) {
     this.elements = {
@@ -183,8 +190,14 @@ export class TypsternityGame {
       skippedValue: getRequiredElement<HTMLDivElement>(root, '#s-skipped'),
       streakValue: getRequiredElement<HTMLDivElement>(root, '#s-streak'),
       reviewList: getRequiredElement<HTMLDivElement>(root, '#review-list'),
+      preambleButton: getRequiredElement<HTMLButtonElement>(root, '#btn-preamble'),
+      preambleDialog: getRequiredElement<HTMLDialogElement>(root, '#preamble-dialog'),
+      preambleForm: getRequiredElement<HTMLFormElement>(root, '#preamble-form'),
+      preambleInput: getRequiredElement<HTMLTextAreaElement>(root, '#preamble-input'),
+      preambleCancelButton: getRequiredElement<HTMLButtonElement>(root, '#btn-preamble-cancel'),
     }
 
+    this.preamble = this.readPreamble()
     this.initializeDebugMenu()
     this.bindEvents()
   }
@@ -277,6 +290,27 @@ export class TypsternityGame {
 
     this.elements.codeInput.addEventListener('input', () => {
       this.queueInputEvaluation()
+    })
+
+    this.elements.preambleButton.addEventListener('click', () => {
+      this.elements.preambleInput.value = this.preamble
+      this.elements.preambleDialog.showModal()
+      this.elements.preambleInput.focus()
+    })
+
+    this.elements.preambleCancelButton.addEventListener('click', () => {
+      this.elements.preambleDialog.close()
+    })
+
+    this.elements.preambleForm.addEventListener('submit', event => {
+      event.preventDefault()
+      this.preamble = this.elements.preambleInput.value.trim()
+      this.writePreamble(this.preamble)
+      this.elements.preambleDialog.close()
+
+      if (this.current && !this.solutionVisible && this.elements.codeInput.value.trim()) {
+        this.queueInputEvaluation()
+      }
     })
   }
 
@@ -868,7 +902,7 @@ export class TypsternityGame {
       return false
     }
 
-    const userResult = await renderFormula(value)
+    const userResult = await renderFormula(value, this.preamble)
 
     if (
       this.solutionVisible ||
@@ -1172,6 +1206,30 @@ export class TypsternityGame {
     } catch { /* ignore */ }
   }
 
+  private readPreamble(): string {
+    const storage = this.getStorage()
+    if (!storage) return ''
+
+    try {
+      return storage.getItem(PREAMBLE_STORAGE_KEY) ?? ''
+    } catch {
+      return ''
+    }
+  }
+
+  private writePreamble(preamble: string): void {
+    const storage = this.getStorage()
+    if (!storage) return
+
+    try {
+      if (preamble) {
+        storage.setItem(PREAMBLE_STORAGE_KEY, preamble)
+      } else {
+        storage.removeItem(PREAMBLE_STORAGE_KEY)
+      }
+    } catch { /* ignore */ }
+  }
+
   private getStorage(): Storage | null {
     try {
       return window.localStorage
@@ -1280,7 +1338,7 @@ export class TypsternityGame {
       return this.getReviewPreviewMarkup(null, 'No code entered.', 'ph', true)
     }
 
-    const result = await renderFormula(attempt)
+    const result = await renderFormula(attempt, this.preamble)
 
     // Always show something — even on parse error
     return this.getReviewPreviewMarkup(

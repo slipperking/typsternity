@@ -107,6 +107,7 @@ code {
 }
 
 .screen {
+  position: relative;
   border: 1px solid var(--border);
   background: rgba(255, 253, 250, 0.9);
   box-shadow: 0 24px 60px var(--paper-shadow);
@@ -177,7 +178,8 @@ code {
 
 .btn:focus-visible,
 .skip-link:focus-visible,
-.code-input:focus-visible {
+.code-input:focus-visible,
+.preamble-trigger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -487,6 +489,68 @@ code {
   font-size: 0.82rem;
   color: var(--quiet-ink);
   white-space: nowrap;
+}
+
+.preamble-trigger {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+}
+
+.preamble-dialog {
+  width: min(560px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(54, 39, 17, 0.2);
+}
+
+.preamble-dialog::backdrop {
+  background: rgba(23, 20, 18, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.preamble-form {
+  padding: 24px;
+}
+
+.preamble-heading {
+  margin-bottom: 22px;
+}
+
+.preamble-heading h2 {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.preamble-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.preamble-form > .sec-label {
+  display: block;
+}
+
+.preamble-input {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.preamble-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.preamble-save {
+  padding: 8px 24px;
 }
 
 .debug-menu {
@@ -832,6 +896,15 @@ code {
 
   .stats-row {
     gap: 18px;
+  }
+
+  .preamble-trigger {
+    right: 18px;
+    bottom: 14px;
+  }
+
+  .preamble-form {
+    padding: 20px;
   }
 }
 
