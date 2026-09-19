@@ -1292,7 +1292,7 @@ export class TypsternityGame {
           entry.result === 'correct'
             ? `+${entry.pts}`
             : entry.result === 'skipped'
-              ? 'skip'
+              ? `(worth ${entry.worth}) skip`
               : entry.result === 'ended'
                 ? `(worth ${entry.worth}) game ended`
                 : 'miss'
