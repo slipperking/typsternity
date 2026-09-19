@@ -924,11 +924,14 @@ export class TypsternityGame {
     this.renderUserLayer(userResult)
 
     if (userResult.ok && this.targetResult?.ok) {
-      const userRasterHash = await hashSvgRaster(userResult.svg).catch(error => {
-        console.error('Could not hash user SVG raster.', error)
-        return null
-      })
+      const userRasterHash = await hashSvgRaster(userResult.svg).catch(() => null)
       const targetRasterHash = await this.targetRasterHash
+
+      console.log('[compare]', {
+        target: targetRasterHash,
+        user: userRasterHash,
+        equal: userRasterHash !== null && targetRasterHash !== null && userRasterHash === targetRasterHash
+      })
 
       if (
         this.solutionVisible ||

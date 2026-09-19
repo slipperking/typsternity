@@ -61,20 +61,17 @@ export async function hashSvgRaster(svg: string | SVGSVGElement): Promise<string
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
-    const ctx = canvas.getContext('2d', { willReadFrequently: true } as any)
+    const ctx = canvas.getContext('2d', { willReadFrequently: true } as any) as CanvasRenderingContext2D | null
     if (!ctx) return null
-    ctx.drawImage(image, 0, 0, width, height)
 
-    // now won't throw because foreignObject was removed
-    const pixels = ctx.getImageData(0, 0, width, height).data
-    const hashInput = new Uint8Array(8 + pixels.byteLength)
-    new DataView(hashInput.buffer).setUint32(0, width)
-    new DataView(hashInput.buffer).setUint32(4, height)
-    hashInput.set(pixels, 8)
-    return toHex(await crypto.subtle.digest('SHA-256', hashInput))
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'SecurityError') return null
-    throw e
+    ctx.drawImage(image, 0, 0, width, height)
+    let pixels: Uint8ClampedArray
+    try {
+      pixels = ctx.getImageData(0, 0, width, height).data
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'SecurityError') return null
+      throw e
+    }
   } finally {
     URL.revokeObjectURL(url)
   }
