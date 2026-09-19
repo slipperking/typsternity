@@ -13,6 +13,7 @@ export interface HistoryEntry {
   attempt: string
   result: HistoryResult
   pts: number
+  worth: number
   svg: string | null
   userSvg: string | null
 }

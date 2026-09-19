@@ -864,6 +864,7 @@ export class TypsternityGame {
         attempt: this.elements.codeInput.value.trim(),
         result: 'correct',
         pts: this.current.pts,
+        worth: this.current.pts,
         svg: this.targetResult?.ok ? this.targetResult.svg : null,
         userSvg: this.userResult?.ok ? this.userResult.svg : null,
       })
@@ -879,6 +880,7 @@ export class TypsternityGame {
         attempt: this.elements.codeInput.value.trim(),
         result: 'ended',
         pts: 0,
+        worth: this.current.pts,
         svg: this.targetResult?.ok ? this.targetResult.svg : null,
         userSvg: this.userResult?.ok ? this.userResult.svg : null,
       })
@@ -992,6 +994,7 @@ export class TypsternityGame {
       attempt: value,
       result: isCorrect ? 'correct' : 'wrong',
       pts: isCorrect ? this.current.pts : 0,
+      worth: this.current.pts,
       svg: this.targetResult?.ok ? this.targetResult.svg : null,
       userSvg: this.userResult?.ok ? this.userResult.svg : null,
     })
@@ -1034,6 +1037,7 @@ export class TypsternityGame {
       attempt: this.elements.codeInput.value.trim(),
       result: 'skipped',
       pts: 0,
+      worth: this.current.pts,
       svg: this.targetResult?.ok ? this.targetResult.svg : null,
       userSvg: this.userResult?.ok ? this.userResult.svg : null,
     })
@@ -1290,7 +1294,7 @@ export class TypsternityGame {
             : entry.result === 'skipped'
               ? 'skip'
               : entry.result === 'ended'
-                ? 'game ended'
+                ? `(worth ${entry.worth}) game ended`
                 : 'miss'
         const attempt = entry.attempt
           ? escapeHtml(entry.attempt)
