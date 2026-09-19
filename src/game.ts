@@ -640,13 +640,20 @@ export class TypsternityGame {
     this.elements.yoursBox.classList.remove('match')
     this.renderShadowLayer()
     this.targetResult = await renderFormula(next.src)
-    if (this.targetResult.ok) {
-      this.targetRasterHash = hashSvgRaster(this.targetResult.svg).catch(error => {
-        console.error('Could not hash target SVG raster.', error)
-        return null
-      })
-    }
     this.setSvg(this.elements.targetBox, this.targetResult, 'render error')
+    if (this.targetResult.ok) {
+      const targetSvg = this.elements.targetBox.querySelector<SVGSVGElement>('svg')
+
+      if (targetSvg) {
+        this.targetRasterHash = hashSvgRaster(targetSvg).then(h => {
+          console.log('[target]', this.current?.name, h)
+          return h
+        }).catch(err => {
+          console.warn('[target] hash failed', err)
+          return null
+        })
+      }
+    }
     this.renderShadowLayer()
     this.renderUserLayer(null)
 
