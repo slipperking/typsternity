@@ -145,6 +145,7 @@ export class TypsternityGame {
   private isPracticeMissedMode = false
   private practiceAppearances = new Map<string, number>()
   private preamble = ''
+  private readonly outputResizeObserver: ResizeObserver
 
   constructor(root: HTMLElement) {
     this.elements = {
@@ -200,6 +201,10 @@ export class TypsternityGame {
     this.preamble = this.readPreamble()
     this.initializeDebugMenu()
     this.bindEvents()
+    this.outputResizeObserver = new ResizeObserver(() => {
+      this.alignUserLayerToShadow()
+    })
+    this.outputResizeObserver.observe(this.elements.yoursBox)
   }
 
   async initialize(): Promise<void> {
@@ -784,10 +789,84 @@ export class TypsternityGame {
     }
   }
 
+  private alignUserLayerToShadow(): void {
+    const userSvg = this.elements.yoursRender.querySelector<SVGSVGElement>('svg')
+
+    if (!userSvg) {
+      return
+    }
+
+    const resetUserLayout = () => {
+      userSvg.style.position = ''
+      userSvg.style.left = ''
+      userSvg.style.top = ''
+      userSvg.style.width = 'auto'
+      userSvg.style.height = 'auto'
+      userSvg.style.maxWidth = '100%'
+      userSvg.style.maxHeight = '100%'
+    }
+
+    const shadowSvg = this.shadowEnabled
+      ? this.elements.yoursShadow.querySelector<SVGSVGElement>('svg')
+      : null
+
+    if (!shadowSvg) {
+      resetUserLayout()
+      return
+    }
+
+    const shadowViewBox = shadowSvg.viewBox.baseVal
+    const userViewBox = userSvg.viewBox.baseVal
+    const shadowBounds = shadowSvg.getBoundingClientRect()
+    const userLayerBounds = this.elements.yoursRender.getBoundingClientRect()
+    const getFirstGlyphBounds = (svg: SVGSVGElement): DOMRect | null => {
+      const glyph = Array.from(svg.querySelectorAll<SVGGraphicsElement>('use'))
+        .find(candidate => !candidate.closest('defs'))
+      const bounds = glyph?.getBoundingClientRect()
+
+      return bounds && (bounds.width > 0 || bounds.height > 0) ? bounds : null
+    }
+
+    if (
+      shadowViewBox.width <= 0 ||
+      shadowViewBox.height <= 0 ||
+      userViewBox.width <= 0 ||
+      userViewBox.height <= 0 ||
+      shadowBounds.width <= 0 ||
+      shadowBounds.height <= 0
+    ) {
+      resetUserLayout()
+      return
+    }
+
+    const scaleX = shadowBounds.width / shadowViewBox.width
+    const scaleY = shadowBounds.height / shadowViewBox.height
+    const scale = Math.min(scaleX, scaleY)
+    const userHeight = userViewBox.height * scale
+    const initialUserTop = shadowBounds.top - userLayerBounds.top
+
+    userSvg.style.position = 'absolute'
+    userSvg.style.left = `${shadowBounds.left - userLayerBounds.left}px`
+    userSvg.style.top = `${initialUserTop}px`
+    userSvg.style.width = `${userViewBox.width * scale}px`
+    userSvg.style.height = `${userHeight}px`
+    userSvg.style.maxWidth = 'none'
+    userSvg.style.maxHeight = 'none'
+
+    const shadowGlyphBounds = getFirstGlyphBounds(shadowSvg)
+    const userGlyphBounds = getFirstGlyphBounds(userSvg)
+    const alignedUserTop = shadowGlyphBounds && userGlyphBounds
+      ? initialUserTop + shadowGlyphBounds.top - userGlyphBounds.top
+      : shadowBounds.bottom - userLayerBounds.top - userHeight
+
+    userSvg.style.top = `${alignedUserTop}px`
+  }
+
   private renderUserLayer(result: RenderResult | null): void {
     const emptyLabel =
       this.shadowEnabled && this.targetResult?.ok ? '' : 'start typing below…'
     this.setLayerSvg(this.elements.yoursRender, result, emptyLabel)
+    this.alignUserLayerToShadow()
   }
 
   private renderShadowLayer(): void {
