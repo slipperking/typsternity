@@ -796,7 +796,19 @@ export class TypsternityGame {
       return
     }
 
+    const originalViewBox =
+      userSvg.dataset.shadowOriginalViewBox ?? userSvg.getAttribute('viewBox')
+
+    const restoreOriginalViewBox = () => {
+      if (originalViewBox) {
+        userSvg.setAttribute('viewBox', originalViewBox)
+      }
+
+      delete userSvg.dataset.shadowOriginalViewBox
+    }
+
     const resetUserLayout = () => {
+      restoreOriginalViewBox()
       userSvg.style.position = ''
       userSvg.style.left = ''
       userSvg.style.top = ''
@@ -815,23 +827,59 @@ export class TypsternityGame {
       return
     }
 
+    const parseViewBox = (value: string | null) => {
+      const parts = value?.trim().split(/[\s,]+/).map(Number)
+
+      if (
+        parts?.length !== 4 ||
+        !parts.every(Number.isFinite) ||
+        parts[2] <= 0 ||
+        parts[3] <= 0
+      ) {
+        return null
+      }
+
+      return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] }
+    }
+
+    const getFirstGlyphAnchor = (svg: SVGSVGElement) => {
+      const glyph = Array.from(svg.querySelectorAll<SVGUseElement>('use'))
+        .find(candidate => !candidate.closest('defs'))
+
+      if (!glyph) {
+        return null
+      }
+
+      let point = svg.createSVGPoint()
+      point.x = glyph.x.baseVal.value
+      point.y = glyph.y.baseVal.value
+
+      let current: Element | null = glyph
+
+      while (current && current !== svg) {
+        if (current instanceof SVGGraphicsElement) {
+          const matrix = current.transform.baseVal.consolidate()?.matrix
+
+          if (matrix) {
+            point = point.matrixTransform(matrix)
+          }
+        }
+
+        current = current.parentElement
+      }
+
+      return { x: point.x, y: point.y }
+    }
+
     const shadowViewBox = shadowSvg.viewBox.baseVal
-    const userViewBox = userSvg.viewBox.baseVal
+    const userViewBox = parseViewBox(originalViewBox)
     const shadowBounds = shadowSvg.getBoundingClientRect()
     const userLayerBounds = this.elements.yoursRender.getBoundingClientRect()
-    const getFirstGlyphBounds = (svg: SVGSVGElement): DOMRect | null => {
-      const glyph = Array.from(svg.querySelectorAll<SVGGraphicsElement>('use'))
-        .find(candidate => !candidate.closest('defs'))
-      const bounds = glyph?.getBoundingClientRect()
-
-      return bounds && (bounds.width > 0 || bounds.height > 0) ? bounds : null
-    }
 
     if (
       shadowViewBox.width <= 0 ||
       shadowViewBox.height <= 0 ||
-      userViewBox.width <= 0 ||
-      userViewBox.height <= 0 ||
+      !userViewBox ||
       shadowBounds.width <= 0 ||
       shadowBounds.height <= 0
     ) {
@@ -839,27 +887,43 @@ export class TypsternityGame {
       return
     }
 
+    const shadowAnchor = getFirstGlyphAnchor(shadowSvg)
+    const userAnchor = getFirstGlyphAnchor(userSvg)
+    const initialUserTop = shadowBounds.top - userLayerBounds.top
+
+    if (shadowAnchor && userAnchor) {
+      userSvg.dataset.shadowOriginalViewBox = originalViewBox ?? ''
+      userSvg.style.position = 'absolute'
+      userSvg.style.left = `${shadowBounds.left - userLayerBounds.left}px`
+      userSvg.style.top = `${initialUserTop}px`
+      userSvg.style.width = `${shadowBounds.width}px`
+      userSvg.style.height = `${shadowBounds.height}px`
+      userSvg.style.maxWidth = 'none'
+      userSvg.style.maxHeight = 'none'
+      userSvg.setAttribute('viewBox', [
+        userAnchor.x - shadowAnchor.x + shadowViewBox.x,
+        userAnchor.y - shadowAnchor.y + shadowViewBox.y,
+        shadowViewBox.width,
+        shadowViewBox.height,
+      ].join(' '))
+      return
+    }
+
+    // Non-glyph drawings do not expose a baseline anchor. Keep the previous
+    // bottom-alignment fallback for those uncommon SVGs.
+    restoreOriginalViewBox()
     const scaleX = shadowBounds.width / shadowViewBox.width
     const scaleY = shadowBounds.height / shadowViewBox.height
     const scale = Math.min(scaleX, scaleY)
     const userHeight = userViewBox.height * scale
-    const initialUserTop = shadowBounds.top - userLayerBounds.top
 
     userSvg.style.position = 'absolute'
     userSvg.style.left = `${shadowBounds.left - userLayerBounds.left}px`
-    userSvg.style.top = `${initialUserTop}px`
+    userSvg.style.top = `${shadowBounds.bottom - userLayerBounds.top - userHeight}px`
     userSvg.style.width = `${userViewBox.width * scale}px`
     userSvg.style.height = `${userHeight}px`
     userSvg.style.maxWidth = 'none'
     userSvg.style.maxHeight = 'none'
-
-    const shadowGlyphBounds = getFirstGlyphBounds(shadowSvg)
-    const userGlyphBounds = getFirstGlyphBounds(userSvg)
-    const alignedUserTop = shadowGlyphBounds && userGlyphBounds
-      ? initialUserTop + shadowGlyphBounds.top - userGlyphBounds.top
-      : shadowBounds.bottom - userLayerBounds.top - userHeight
-
-    userSvg.style.top = `${alignedUserTop}px`
   }
 
   private renderUserLayer(result: RenderResult | null): void {

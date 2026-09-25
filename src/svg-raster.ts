@@ -2,6 +2,18 @@ const PIXELS_PER_POINT = 2
 
 interface SvgSize { width: number; height: number }
 
+const UI_LAYOUT_PROPERTIES = [
+  'display',
+  'max-width',
+  'max-height',
+  'width',
+  'height',
+  'position',
+  'left',
+  'top',
+  'cursor',
+] as const
+
 function serializeSvg(svg: string | SVGSVGElement): string {
   if (typeof svg === 'string') return svg
   return new XMLSerializer().serializeToString(svg)
@@ -27,7 +39,26 @@ function stripForRaster(svg: string): string {
     if (doc.querySelector('parsererror')) throw new Error('parsererror')
     doc.querySelectorAll('foreignObject').forEach(el => el.remove())
     doc.querySelectorAll('script').forEach(el => el.remove())
-    return new XMLSerializer().serializeToString(doc.documentElement)
+
+    const root = doc.documentElement as unknown as SVGSVGElement
+    const size = getSvgSize(svg)
+
+    // The game removes the intrinsic dimensions and adds layout-only styles
+    // after inserting an SVG into the page. Those mutations are useful for
+    // responsive display, but they change the viewport when the serialized SVG
+    // is loaded as a standalone image (the default viewport becomes 300x150).
+    // Give every rasterized SVG the same intrinsic viewport and discard only
+    // the styles/data attributes added by the game UI.
+    root.setAttribute('width', String(size.width))
+    root.setAttribute('height', String(size.height))
+    UI_LAYOUT_PROPERTIES.forEach(property => root.style.removeProperty(property))
+    root.removeAttribute('data-jump-bound')
+
+    if (!root.style.cssText.trim()) {
+      root.removeAttribute('style')
+    }
+
+    return new XMLSerializer().serializeToString(root)
   } catch {
     return svg.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '').replace(/<script[\s\S]*?<\/script>/gi, '')
   }
